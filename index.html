@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>知りません</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>知りません</h1>
+            <div class="score-board">
+                <div class="score red-score">
+                    <span class="score-label editable" id="redName" contenteditable="true">あか</span>
+                    <span class="score-value" id="redScore">2</span>
+                </div>
+                <div class="current-turn" id="currentTurn">
+                    <span>いまのばん：</span>
+                    <span class="turn-indicator red" id="turnIndicatorText">あか</span>
+                </div>
+                <div class="score white-score">
+                    <span class="score-label editable" id="whiteName" contenteditable="true">しろ</span>
+                    <span class="score-value" id="whiteScore">2</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-board" id="gameBoard">
+                <!-- 6x6のマス目がJavaScriptで生成されます -->
+            </div>
+            
+            <div class="controls">
+                <button class="btn-reset" id="resetBtn">もういちど あそぶ</button>
+                <button class="btn-hint" id="hintBtn">ヒント</button>
+            </div>
+        </main>
+
+        <div class="message-area" id="messageArea">
+            <p>あかのばんです！コマをおいてね</p>
+        </div>
+
+        <!-- 勝利時のモーダル -->
+        <div class="modal" id="winModal">
+            <div class="modal-content">
+                <h2 id="winMessage">おめでとう！</h2>
+                <p id="finalScore"></p>
+                <button class="btn-play-again" id="playAgainBtn">もういちど あそぶ</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
