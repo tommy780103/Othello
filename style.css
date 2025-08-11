@@ -1093,6 +1093,17 @@ h1 {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* スコアボード用（選択色テーマに追従） */
+.preview-piece.role-red {
+    background: radial-gradient(circle at 30% 30%, var(--player1-gradient-start), var(--player1-gradient-end));
+    border-color: var(--player1-border);
+}
+
+.preview-piece.role-white {
+    background: radial-gradient(circle at 30% 30%, var(--player2-gradient-start), var(--player2-gradient-end));
+    border-color: var(--player2-border);
+}
+
 .color-name {
     font-size: 0.9rem;
     font-weight: bold;
