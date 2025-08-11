@@ -12,7 +12,21 @@
             <h1>イロオセロ</h1>
             <div class="score-board" id="scoreBoard" style="display: none;">
                 <div class="multiplayer-scores" id="multiplayerScores">
-                    <!-- 多人数用スコアボードがJavaScriptで生成されます -->
+                    <!-- 2人用スコアボード（JSが参照するIDに合わせて設置） -->
+                    <div class="score red-score">
+                        <div class="player-info">
+                            <span class="preview-piece color-red"></span>
+                            <span id="redName">あか</span>
+                        </div>
+                        <div class="score-value" id="redScore">2</div>
+                    </div>
+                    <div class="score white-score">
+                        <div class="player-info">
+                            <span class="preview-piece color-white"></span>
+                            <span id="whiteName">しろ</span>
+                        </div>
+                        <div class="score-value" id="whiteScore">2</div>
+                    </div>
                 </div>
                 <div class="current-turn" id="currentTurn">
                     <span>いまのばん：</span>
