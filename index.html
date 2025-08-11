@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>知りません</title>
+    <title>イロオセロ</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>知りません</h1>
+            <h1>イロオセロ</h1>
             <div class="score-board">
                 <div class="score red-score">
-                    <span class="score-label editable" id="redName" contenteditable="true">あか</span>
+                    <div class="player-info">
+                        <span class="score-label" id="redName">あか</span>
+                        <button class="name-edit-btn" id="redNameBtn" title="名前をかえる">✏️</button>
+                    </div>
                     <span class="score-value" id="redScore">2</span>
                 </div>
                 <div class="current-turn" id="currentTurn">
@@ -20,20 +23,131 @@
                     <span class="turn-indicator red" id="turnIndicatorText">あか</span>
                 </div>
                 <div class="score white-score">
-                    <span class="score-label editable" id="whiteName" contenteditable="true">しろ</span>
+                    <div class="player-info">
+                        <span class="score-label" id="whiteName">しろ</span>
+                        <button class="name-edit-btn" id="whiteNameBtn" title="名前をかえる">✏️</button>
+                    </div>
                     <span class="score-value" id="whiteScore">2</span>
                 </div>
             </div>
         </header>
 
         <main>
-            <div class="game-board" id="gameBoard">
-                <!-- 6x6のマス目がJavaScriptで生成されます -->
+            <!-- ゲームモード選択 -->
+            <div class="game-mode-selector" id="gameModeSelector">
+                <h2>あそびかたをえらんでね</h2>
+                <div class="mode-buttons">
+                    <button class="mode-btn" data-mode="pvp">
+                        <span class="mode-icon">👥</span>
+                        <span class="mode-text">ふたりであそぶ</span>
+                    </button>
+                    <button class="mode-btn" data-mode="cpu">
+                        <span class="mode-icon">🤖</span>
+                        <span class="mode-text">コンピューターとあそぶ</span>
+                    </button>
+                </div>
+                <div class="difficulty-selector" id="difficultySelector" style="display: none;">
+                    <h3>つよさをえらんでね</h3>
+                    <div class="difficulty-buttons">
+                        <button class="diff-btn" data-level="1">ちょうやさしい</button>
+                        <button class="diff-btn" data-level="2">やさしい</button>
+                        <button class="diff-btn" data-level="3">ふつう</button>
+                        <button class="diff-btn" data-level="4">つよい</button>
+                        <button class="diff-btn" data-level="5">おにつよ</button>
+                    </div>
+                </div>
+                
+                <div class="color-selector">
+                    <h3>コマの色をえらんでね</h3>
+                    <div class="individual-color-selection">
+                        <div class="player-color-section">
+                            <h4>プレイヤー1の色</h4>
+                            <div class="color-options">
+                                <div class="color-option" data-color="red" data-player="1">
+                                    <span class="preview-piece color-red"></span>
+                                    <span class="color-name">あか</span>
+                                </div>
+                                <div class="color-option" data-color="black" data-player="1">
+                                    <span class="preview-piece color-black"></span>
+                                    <span class="color-name">くろ</span>
+                                </div>
+                                <div class="color-option" data-color="orange" data-player="1">
+                                    <span class="preview-piece color-orange"></span>
+                                    <span class="color-name">オレンジ</span>
+                                </div>
+                                <div class="color-option" data-color="pink" data-player="1">
+                                    <span class="preview-piece color-pink"></span>
+                                    <span class="color-name">ピンク</span>
+                                </div>
+                                <div class="color-option" data-color="yellow" data-player="1">
+                                    <span class="preview-piece color-yellow"></span>
+                                    <span class="color-name">きいろ</span>
+                                </div>
+                                <div class="color-option" data-color="gold" data-player="1">
+                                    <span class="preview-piece color-gold"></span>
+                                    <span class="color-name">きん</span>
+                                </div>
+                                <div class="color-option" data-color="lime" data-player="1">
+                                    <span class="preview-piece color-lime"></span>
+                                    <span class="color-name">きみどり</span>
+                                </div>
+                                <div class="color-option" data-color="purple" data-player="1">
+                                    <span class="preview-piece color-purple"></span>
+                                    <span class="color-name">むらさき</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="vs-divider">VS</div>
+                        <div class="player-color-section">
+                            <h4>プレイヤー2の色</h4>
+                            <div class="color-options">
+                                <div class="color-option" data-color="white" data-player="2">
+                                    <span class="preview-piece color-white"></span>
+                                    <span class="color-name">しろ</span>
+                                </div>
+                                <div class="color-option" data-color="blue" data-player="2">
+                                    <span class="preview-piece color-blue"></span>
+                                    <span class="color-name">あお</span>
+                                </div>
+                                <div class="color-option" data-color="green" data-player="2">
+                                    <span class="preview-piece color-green"></span>
+                                    <span class="color-name">みどり</span>
+                                </div>
+                                <div class="color-option" data-color="gray" data-player="2">
+                                    <span class="preview-piece color-gray"></span>
+                                    <span class="color-name">グレー</span>
+                                </div>
+                                <div class="color-option" data-color="silver" data-player="2">
+                                    <span class="preview-piece color-silver"></span>
+                                    <span class="color-name">ぎん</span>
+                                </div>
+                                <div class="color-option" data-color="black" data-player="2">
+                                    <span class="preview-piece color-black"></span>
+                                    <span class="color-name">くろ</span>
+                                </div>
+                                <div class="color-option" data-color="cyan" data-player="2">
+                                    <span class="preview-piece color-cyan"></span>
+                                    <span class="color-name">みずいろ</span>
+                                </div>
+                                <div class="color-option" data-color="brown" data-player="2">
+                                    <span class="preview-piece color-brown"></span>
+                                    <span class="color-name">ちゃいろ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-board" id="gameBoard" style="display: none;">
+                <!-- 8x8のマス目がJavaScriptで生成されます -->
             </div>
             
-            <div class="controls">
+            <div class="controls" style="display: none;" id="gameControls">
                 <button class="btn-reset" id="resetBtn">もういちど あそぶ</button>
                 <button class="btn-hint" id="hintBtn">ヒント</button>
+                <button class="btn-swap" id="swapBtn">なまえをこうかん</button>
+                <button class="btn-menu" id="menuBtn">メニューにもどる</button>
             </div>
         </main>
 
@@ -47,6 +161,23 @@
                 <h2 id="winMessage">おめでとう！</h2>
                 <p id="finalScore"></p>
                 <button class="btn-play-again" id="playAgainBtn">もういちど あそぶ</button>
+            </div>
+        </div>
+
+        <!-- 名前変更モーダル -->
+        <div class="modal" id="nameModal">
+            <div class="modal-content">
+                <h2 id="nameModalTitle">名前をかえてね</h2>
+                <div class="name-input-container">
+                    <input type="text" id="nameInput" maxlength="10" placeholder="あたらしい名前">
+                    <div class="preset-names" id="presetNames">
+                        <!-- プリセット名がJavaScriptで追加されます -->
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-cancel" id="nameCancelBtn">やめる</button>
+                    <button class="btn-confirm" id="nameConfirmBtn">きまり</button>
+                </div>
             </div>
         </div>
     </div>

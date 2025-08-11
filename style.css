@@ -1,3 +1,20 @@
+:root {
+    /* デフォルトの色設定 */
+    --player1-color: #ff6b6b;
+    --player1-gradient-start: #ff8787;
+    --player1-gradient-end: #ff6b6b;
+    --player1-border: #ff5252;
+    --player1-hint: rgba(255, 107, 107, 0.4);
+    --player1-hint-light: rgba(255, 107, 107, 0.2);
+    
+    --player2-color: #ffffff;
+    --player2-gradient-start: #ffffff;
+    --player2-gradient-end: #f1f2f6;
+    --player2-border: #dfe6e9;
+    --player2-hint: rgba(116, 185, 255, 0.4);
+    --player2-hint-light: rgba(116, 185, 255, 0.2);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -51,36 +68,36 @@ h1 {
     gap: 5px;
 }
 
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .score-label {
     font-size: 1.2rem;
     font-weight: bold;
 }
 
-.score-label.editable {
-    cursor: text;
-    padding: 4px 8px;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
-    min-width: 60px;
-    display: inline-block;
-    text-align: center;
+.name-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    opacity: 0.7;
 }
 
-.score-label.editable:hover {
-    background-color: rgba(255, 255, 255, 0.5);
-}
-
-.score-label.editable:focus {
-    background-color: rgba(255, 255, 255, 0.8);
-    outline: 2px solid #ff6b6b;
-}
-
-.white-score .score-label.editable:focus {
-    outline: 2px solid #74b9ff;
+.name-edit-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
 }
 
 .red-score .score-label {
-    color: #ff6b6b;
+    color: var(--player1-color);
 }
 
 .white-score .score-label {
@@ -113,7 +130,7 @@ h1 {
 
 .turn-indicator.red {
     color: white;
-    background: #ff6b6b;
+    background: var(--player1-color);
 }
 
 .turn-indicator.white {
@@ -164,13 +181,13 @@ h1 {
     position: absolute;
     width: 30%;
     height: 30%;
-    background: radial-gradient(circle, rgba(255, 107, 107, 0.4), rgba(255, 107, 107, 0.2));
+    background: radial-gradient(circle, var(--player1-hint), var(--player1-hint-light));
     border-radius: 50%;
     animation: gentlePulse 2s infinite;
 }
 
 .cell.valid-move-hint.white-turn::before {
-    background: radial-gradient(circle, rgba(116, 185, 255, 0.4), rgba(116, 185, 255, 0.2));
+    background: radial-gradient(circle, var(--player2-hint), var(--player2-hint-light));
 }
 
 @keyframes pulse {
@@ -203,13 +220,13 @@ h1 {
 }
 
 .piece.red {
-    background: radial-gradient(circle at 30% 30%, #ff8787, #ff6b6b);
-    border: 3px solid #ff5252;
+    background: radial-gradient(circle at 30% 30%, var(--player1-gradient-start), var(--player1-gradient-end));
+    border: 3px solid var(--player1-border);
 }
 
 .piece.white {
-    background: radial-gradient(circle at 30% 30%, #ffffff, #f1f2f6);
-    border: 3px solid #dfe6e9;
+    background: radial-gradient(circle at 30% 30%, var(--player2-gradient-start), var(--player2-gradient-end));
+    border: 3px solid var(--player2-border);
 }
 
 .piece.flip {
@@ -235,7 +252,107 @@ h1 {
     margin-bottom: 20px;
 }
 
-.btn-reset, .btn-hint, .btn-play-again {
+.game-mode-selector {
+    text-align: center;
+    padding: 20px;
+}
+
+.game-mode-selector h2, .game-mode-selector h3 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.mode-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.mode-btn {
+    background: white;
+    border: 3px solid #a29bfe;
+    border-radius: 20px;
+    padding: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 150px;
+}
+
+.mode-btn:hover {
+    background: #a29bfe;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.mode-icon {
+    display: block;
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.mode-text {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.difficulty-selector {
+    margin-top: 30px;
+}
+
+.difficulty-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.diff-btn {
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    border: 2px solid #dfe6e9;
+}
+
+.diff-btn[data-level="1"] {
+    background: #81ecec;
+    color: white;
+}
+
+.diff-btn[data-level="2"] {
+    background: #74b9ff;
+    color: white;
+}
+
+.diff-btn[data-level="3"] {
+    background: #a29bfe;
+    color: white;
+}
+
+.diff-btn[data-level="4"] {
+    background: #fd79a8;
+    color: white;
+}
+
+.diff-btn[data-level="5"] {
+    background: #e17055;
+    color: white;
+}
+
+.diff-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-reset, .btn-hint, .btn-swap, .btn-menu, .btn-play-again {
     padding: 12px 25px;
     font-size: 1.2rem;
     font-weight: bold;
@@ -263,6 +380,26 @@ h1 {
 
 .btn-hint:hover {
     background: #0abde3;
+    transform: translateY(-2px);
+}
+
+.btn-swap {
+    background: #fd79a8;
+    color: white;
+}
+
+.btn-swap:hover {
+    background: #e84393;
+    transform: translateY(-2px);
+}
+
+.btn-menu {
+    background: #95afc0;
+    color: white;
+}
+
+.btn-menu:hover {
+    background: #535c68;
     transform: translateY(-2px);
 }
 
@@ -350,7 +487,258 @@ h1 {
     margin-bottom: 30px;
 }
 
+.name-input-container {
+    margin: 20px 0;
+}
+
+#nameInput {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.2rem;
+    border: 2px solid #dfe6e9;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+#nameInput:focus {
+    outline: none;
+    border-color: #a29bfe;
+}
+
+.preset-names {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.preset-name {
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 2px solid #dfe6e9;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.preset-name:hover {
+    background: #a29bfe;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.btn-cancel, .btn-confirm {
+    padding: 12px 25px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background: #95afc0;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #535c68;
+}
+
+.btn-confirm {
+    background: #55efc4;
+    color: white;
+}
+
+.btn-confirm:hover {
+    background: #00b894;
+}
+
+/* 色選択 */
+.color-selector {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.individual-color-selection {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.player-color-section {
+    flex: 1;
+    min-width: 250px;
+}
+
+.player-color-section h4 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.color-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.color-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    border: 3px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.color-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.color-option.selected {
+    border-color: #a29bfe;
+    background: #f8f9fa;
+}
+
+.vs-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #a29bfe;
+    background: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    margin-top: 40px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preview-piece {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.color-name {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 色定義 */
+.color-red {
+    background: radial-gradient(circle at 30% 30%, #ff8787, #ff6b6b);
+    border-color: #ff5252;
+}
+
+.color-white {
+    background: radial-gradient(circle at 30% 30%, #ffffff, #f1f2f6);
+    border-color: #dfe6e9;
+}
+
+.color-black {
+    background: radial-gradient(circle at 30% 30%, #2d3436, #000000);
+    border-color: #636e72;
+}
+
+.color-orange {
+    background: radial-gradient(circle at 30% 30%, #ff8c42, #e17055);
+    border-color: #d63031;
+}
+
+.color-blue {
+    background: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3);
+    border-color: #2d3436;
+}
+
+.color-pink {
+    background: radial-gradient(circle at 30% 30%, #fd79a8, #e84393);
+    border-color: #d63031;
+}
+
+.color-green {
+    background: radial-gradient(circle at 30% 30%, #55efc4, #00b894);
+    border-color: #00853e;
+}
+
+.color-yellow {
+    background: radial-gradient(circle at 30% 30%, #fdcb6e, #f39c12);
+    border-color: #e17055;
+}
+
+.color-gray {
+    background: radial-gradient(circle at 30% 30%, #95afc0, #636e72);
+    border-color: #2d3436;
+}
+
+.color-gold {
+    background: radial-gradient(circle at 30% 30%, #f1c40f, #d4af37);
+    border-color: #b7950b;
+}
+
+.color-silver {
+    background: radial-gradient(circle at 30% 30%, #ddd6fe, #c0c0c0);
+    border-color: #95a5a6;
+}
+
+.color-lime {
+    background: radial-gradient(circle at 30% 30%, #a4e17a, #81c784);
+    border-color: #4caf50;
+}
+
+.color-purple {
+    background: radial-gradient(circle at 30% 30%, #b39ddb, #9c27b0);
+    border-color: #7b1fa2;
+}
+
+.color-cyan {
+    background: radial-gradient(circle at 30% 30%, #81d4fa, #00bcd4);
+    border-color: #0097a7;
+}
+
+.color-brown {
+    background: radial-gradient(circle at 30% 30%, #a1887f, #795548);
+    border-color: #5d4037;
+}
+
 @media (max-width: 768px) {
+    .individual-color-selection {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .vs-divider {
+        margin: 0 auto;
+        margin-top: 0;
+    }
+    
+    .color-options {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
     .container {
         padding: 20px;
         max-width: 100%;
