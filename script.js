@@ -143,11 +143,13 @@ class OthelloGame {
                 this.generatePlayerSetup();
                 this.showPlayerBreakdown();
                 
-                // CPUがいる場合は難易度選択、そうでなければ色選択に進む
+                // 3-4人モードまたはCPUがいる場合の処理
                 setTimeout(() => {
-                    if (this.gameMode === 'cpu') {
+                    if (this.totalPlayers === 2 && this.gameMode === 'cpu') {
+                        // 2人モードでCPUがいる場合は難易度選択
                         document.getElementById('difficultySelector').style.display = 'block';
                     } else {
+                        // 3-4人モードまたは全員人間の場合は色選択に進む
                         this.resetColorSelection();
                     }
                 }, 1000);
@@ -197,6 +199,23 @@ class OthelloGame {
         const humanButtons = document.getElementById('humanPlayerButtons');
         
         humanButtons.innerHTML = '';
+        
+        // 1人モードの場合は簡略化
+        if (this.totalPlayers === 1) {
+            // 1人モードは自動的にCPU対戦に設定
+            this.totalPlayers = 2; // 内部的には2人モードとして処理
+            this.humanPlayers = 1;
+            this.generatePlayerSetup();
+            this.showPlayerBreakdown();
+            
+            // 難易度選択を表示
+            setTimeout(() => {
+                this.resetColorSelection();
+            }, 800);
+            
+            return;
+        }
+        
         humanSelector.style.display = 'block';
         
         // 1人から全体人数までの人間プレイヤー数ボタンを生成
@@ -297,10 +316,21 @@ class OthelloGame {
         // 現在のプレイヤーに色を設定
         this.selectedColors[this.currentPlayerIndex] = color;
         
+        // 1人モード（vs CPU）の場合のCPU色を自動選択
+        if (this.humanPlayers === 1 && this.totalPlayers === 2 && this.currentPlayerIndex === 0) {
+            const availableColors = this.getAvailableColors();
+            if (availableColors.length > 0) {
+                // CPU用の色を自動選択
+                const cpuColor = availableColors[0]; // 最初の利用可能色を選択
+                this.selectedColors[1] = cpuColor;
+                console.log(`Auto-selected CPU color: ${cpuColor}`);
+            }
+        }
+        
         console.log('After selection - selectedColors:', this.selectedColors);
         
         // プレイヤー名を更新（2人モードの場合のみ）
-        if (this.selectedColors.length === 2) {
+        if (this.totalPlayers === 2) {
             if (this.currentPlayerIndex === 0 && !this.isCustomName.red) {
                 this.playerNames.red = this.colorDefaultNames[color];
                 document.getElementById('redName').textContent = this.playerNames.red;
@@ -312,10 +342,32 @@ class OthelloGame {
         
         // 次のプレイヤーに進む
         this.currentPlayerIndex++;
-        const playerCount = this.selectedColors.length;
         
-        if (this.currentPlayerIndex < playerCount) {
-            // まだ選択していないプレイヤーがいる
+        // 必要な色選択数を計算
+        let requiredSelections;
+        if (this.humanPlayers === 1 && this.totalPlayers === 2) {
+            // 1人モード（vs CPU）の場合は1色選択で完了
+            requiredSelections = 1;
+        } else {
+            // 3-4人モードの場合は全プレイヤーが色選択
+            requiredSelections = this.totalPlayers;
+        }
+        
+        console.log(`Current player index: ${this.currentPlayerIndex}, Required selections: ${requiredSelections}, Total players: ${this.totalPlayers}`);
+        
+        if (this.currentPlayerIndex < requiredSelections) {
+            // CPUプレイヤーの場合は自動で色を選択
+            if (this.totalPlayers > 2 && this.playerSetup && this.playerSetup[this.currentPlayerIndex] === 'cpu') {
+                const availableColors = this.getAvailableColors();
+                if (availableColors.length > 0) {
+                    const cpuColor = availableColors[Math.floor(Math.random() * availableColors.length)];
+                    console.log(`Auto-selecting color ${cpuColor} for CPU player ${this.currentPlayerIndex + 1}`);
+                    this.selectColorForCurrentPlayer(cpuColor);
+                    return; // 再帰を防ぐ
+                }
+            }
+            
+            // 人間プレイヤーの場合は手動で色選択
             console.log(`Moving to player ${this.currentPlayerIndex + 1}`);
             this.updateAvailableColors();
             this.updateColorStepTitle();
@@ -330,17 +382,31 @@ class OthelloGame {
     updateAvailableColors() {
         const availableColors = this.getAvailableColors();
         
-        // 利用可能な色のみ表示
+        // 利用可能な色のみ表示（ランダムは常に表示）
         document.querySelectorAll('#step1 .color-option').forEach(option => {
             const color = option.dataset.color;
-            if (availableColors.includes(color)) {
+            
+            if (color === 'random') {
+                // ランダムは常に表示（利用可能な色がある場合のみ有効化）
+                option.style.display = 'flex';
+                if (availableColors.length > 0) {
+                    option.classList.remove('disabled');
+                } else {
+                    option.classList.add('disabled');
+                }
+            } else if (availableColors.includes(color)) {
+                // 通常の色：利用可能な場合のみ表示
                 option.style.display = 'flex';
                 option.classList.remove('disabled');
             } else {
+                // 既に選択された色：非表示
                 option.style.display = 'none';
                 option.classList.add('disabled');
             }
         });
+        
+        // デバッグ用ログ
+        console.log(`Player ${this.currentPlayerIndex + 1} - Available colors:`, availableColors);
     }
     
     
@@ -436,8 +502,25 @@ class OthelloGame {
                 previewDiv.appendChild(previewPiece);
                 previewDiv.appendChild(colorName);
                 
+                // 名前編集ボタンを追加
+                const editBtn = document.createElement('button');
+                editBtn.className = 'name-edit-btn';
+                editBtn.textContent = '✏️';
+                editBtn.title = '名前をかえる';
+                
+                // CPUの場合は名前編集ボタンを無効化
+                if (this.playerSetup[index] === 'cpu') {
+                    editBtn.style.opacity = '0.3';
+                    editBtn.style.pointerEvents = 'none';
+                } else {
+                    editBtn.addEventListener('click', () => {
+                        this.showMultiplayerNameModal(index);
+                    });
+                }
+                
                 playerDiv.appendChild(playerLabel);
                 playerDiv.appendChild(previewDiv);
+                playerDiv.appendChild(editBtn);
                 
                 finalColorDisplay.appendChild(playerDiv);
                 
@@ -457,8 +540,10 @@ class OthelloGame {
         this.currentPlayerIndex = 0;
         
         // プレイヤー数に応じて初期色配列を設定
-        const playerCount = this.totalPlayers;
-        this.selectedColors = new Array(playerCount).fill(null);
+        this.selectedColors = new Array(this.totalPlayers).fill(null);
+        
+        console.log(`Reset color selection - Total players: ${this.totalPlayers}, Human players: ${this.humanPlayers}`);
+        console.log('Player setup:', this.playerSetup);
         
         document.getElementById('step1').style.display = 'block';
         document.getElementById('step2').style.display = 'none';
@@ -469,16 +554,48 @@ class OthelloGame {
         
         // 色選択イベントリスナーを再設定
         this.setupColorEventListeners();
+        
+        // 初期状態で利用可能な色を更新
+        this.updateAvailableColors();
+        
+        // 3-4人モードでCPUプレイヤーがいる場合、最初のプレイヤーがCPUなら自動選択
+        this.checkAndAutoSelectCpuColor();
+    }
+    
+    checkAndAutoSelectCpuColor() {
+        // 3-4人モードでのCPU自動色選択
+        if (this.totalPlayers > 2 && this.playerSetup && this.playerSetup[this.currentPlayerIndex] === 'cpu') {
+            console.log(`Auto-selecting color for CPU player ${this.currentPlayerIndex + 1}`);
+            setTimeout(() => {
+                const availableColors = this.getAvailableColors();
+                if (availableColors.length > 0) {
+                    const cpuColor = availableColors[Math.floor(Math.random() * availableColors.length)];
+                    this.selectColorForCurrentPlayer(cpuColor);
+                }
+            }, 500); // CPUが「考えている」演出として少し遅延
+        }
     }
     
     updateColorStepTitle() {
-        const playerCount = this.totalPlayers;
-        const playerNumbers = ['1', '2', '3', '4'];
-        const currentPlayerNumber = playerNumbers[this.currentPlayerIndex];
-        
         const title = document.getElementById('colorStepTitle');
-        if (this.currentPlayerIndex < playerCount) {
-            title.textContent = `プレイヤー${currentPlayerNumber}の色をえらんでね`;
+        
+        // 1人モード（vs CPU）の場合
+        if (this.humanPlayers === 1 && this.totalPlayers === 2) {
+            title.textContent = `あなたの色をえらんでね`;
+            return;
+        }
+        
+        // 3-4人モードでのタイトル設定
+        if (this.currentPlayerIndex < this.totalPlayers) {
+            const playerNumbers = ['1', '2', '3', '4'];
+            const currentPlayerNumber = playerNumbers[this.currentPlayerIndex];
+            
+            // 現在のプレイヤーがCPUかどうかチェック
+            if (this.playerSetup && this.playerSetup[this.currentPlayerIndex] === 'cpu') {
+                title.textContent = `コンピューター${currentPlayerNumber}が色を選択中...`;
+            } else {
+                title.textContent = `プレイヤー${currentPlayerNumber}の色をえらんでね`;
+            }
         }
     }
     
@@ -490,10 +607,20 @@ class OthelloGame {
     
     selectRandomColor() {
         const availableColors = this.getAvailableColors();
-        if (availableColors.length === 0) return null;
+        console.log(`Random color selection for player ${this.currentPlayerIndex + 1}:`);
+        console.log('Currently selected colors:', this.selectedColors);
+        console.log('Available colors for random selection:', availableColors);
+        
+        if (availableColors.length === 0) {
+            console.warn('No available colors for random selection!');
+            return null;
+        }
         
         const randomIndex = Math.floor(Math.random() * availableColors.length);
-        return availableColors[randomIndex];
+        const selectedColor = availableColors[randomIndex];
+        
+        console.log(`Randomly selected color: ${selectedColor} (index ${randomIndex} from ${availableColors.length} available colors)`);
+        return selectedColor;
     }
     
     setupJankenEventListeners() {
@@ -606,6 +733,7 @@ class OthelloGame {
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
         document.getElementById('playAgainBtn').addEventListener('click', () => this.reset());
         document.getElementById('hintBtn').addEventListener('click', () => this.showHint());
+        document.getElementById('skipBtn').addEventListener('click', () => this.skipTurn());
         document.getElementById('swapBtn').addEventListener('click', () => this.swapPlayerNames());
         document.getElementById('menuBtn').addEventListener('click', () => this.showMenu());
         
@@ -865,6 +993,32 @@ class OthelloGame {
                     this.multiplayerValidMoves.push([row, col]);
                 }
             }
+        }
+        
+        // 多人数モード用のスキップボタン更新
+        this.updateMultiplayerSkipButton();
+    }
+    
+    updateMultiplayerSkipButton() {
+        const skipBtn = document.getElementById('skipBtn');
+        
+        // 多人数モードでは常にスキップボタンを表示
+        skipBtn.style.display = 'inline-block';
+        
+        // 有効な手がない場合はボタンを強調
+        if (this.multiplayerValidMoves.length === 0) {
+            skipBtn.style.background = '#e74c3c';
+            skipBtn.textContent = 'パス（必須）';
+        } else {
+            skipBtn.style.background = '#ffa502';
+            skipBtn.textContent = 'パス';
+        }
+        
+        // CPUのターンの場合はボタンを無効化
+        if (this.playerSetup && this.playerSetup[this.currentPlayer] === 'cpu') {
+            skipBtn.disabled = true;
+        } else {
+            skipBtn.disabled = false;
         }
     }
     
@@ -1550,6 +1704,78 @@ class OthelloGame {
                     }
                 }
             }
+        }
+        
+        // スキップボタンの表示制御
+        this.updateSkipButton();
+    }
+    
+    updateSkipButton() {
+        const skipBtn = document.getElementById('skipBtn');
+        
+        // 多人数モードまたは有効な手がない場合のみスキップボタンを表示
+        if (this.totalPlayers > 2 || this.validMoves.length === 0) {
+            skipBtn.style.display = 'inline-block';
+            
+            // 有効な手がない場合はボタンを強調
+            if (this.validMoves.length === 0) {
+                skipBtn.style.background = '#e74c3c';
+                skipBtn.textContent = 'パス（必須）';
+            } else {
+                skipBtn.style.background = '#ffa502';
+                skipBtn.textContent = 'パス';
+            }
+        } else {
+            skipBtn.style.display = 'none';
+        }
+        
+        // CPUのターンの場合はボタンを無効化
+        if (this.gameMode === 'cpu' && this.currentPlayer === 'white') {
+            skipBtn.disabled = true;
+        } else if (this.totalPlayers > 2 && this.playerSetup && this.playerSetup[this.currentPlayer] === 'cpu') {
+            skipBtn.disabled = true;
+        } else {
+            skipBtn.disabled = false;
+        }
+    }
+    
+    skipTurn() {
+        // CPUのターンではスキップできない
+        if (this.gameMode === 'cpu' && this.currentPlayer === 'white') return;
+        if (this.totalPlayers > 2 && this.playerSetup && this.playerSetup[this.currentPlayer] === 'cpu') return;
+        
+        if (this.totalPlayers > 2) {
+            // 多人数モードでのスキップ処理
+            this.handleMultiplayerPass();
+        } else {
+            // 2人モードでのスキップ処理
+            this.handleTwoPlayerSkip();
+        }
+        
+        this.playSound('place');
+    }
+    
+    handleTwoPlayerSkip() {
+        const currentPlayerName = this.playerNames[this.currentPlayer];
+        this.updateMessage(`${currentPlayerName}がパスしました`);
+        
+        // プレイヤーを切り替え
+        this.switchPlayer();
+        this.updateValidMoves();
+        
+        // 次のプレイヤーも有効な手がない場合はゲーム終了
+        if (this.validMoves.length === 0) {
+            this.endGame();
+            return;
+        }
+        
+        // 通常のターン続行
+        this.updateTurnIndicator();
+        this.updateMessage(`${this.playerNames[this.currentPlayer]}のばんです！`);
+        
+        // CPUの手番処理
+        if (this.gameMode === 'cpu' && this.currentPlayer === 'white') {
+            this.makeAiMove();
         }
     }
     

@@ -608,6 +608,22 @@ h1 {
     transform: translateY(-2px);
 }
 
+.btn-skip {
+    background: #ffa502;
+    color: white;
+}
+
+.btn-skip:hover {
+    background: #ff6348;
+    transform: translateY(-2px);
+}
+
+.btn-skip:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .btn-swap {
     background: #fd79a8;
     color: white;
@@ -843,6 +859,15 @@ h1 {
     pointer-events: none;
 }
 
+/* ランダム選択が利用不可の場合の特別なスタイル */
+.color-option.disabled .preview-piece {
+    filter: grayscale(100%) brightness(0.7);
+}
+
+.color-option.disabled .color-name {
+    color: #95a5a6;
+}
+
 .chosen-color-display {
     background: #f8f9fa;
     padding: 15px;
@@ -874,6 +899,36 @@ h1 {
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    position: relative;
+    padding: 15px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 多人数モード用の名前編集ボタンスタイル */
+.player-final-color .name-edit-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 25px;
+    height: 25px;
+    border: none;
+    background: #a29bfe;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.player-final-color .name-edit-btn:hover {
+    background: #6c5ce7;
+    transform: scale(1.1);
 }
 
 .final-preview {
