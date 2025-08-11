@@ -239,46 +239,103 @@ class OthelloGame {
     
     setupColorEventListeners() {
         console.log('Setting up color event listeners...');
-        const colorOptions = document.querySelectorAll('#step1 .color-option');
-        console.log('Found color options:', colorOptions.length);
         
-        colorOptions.forEach((option, index) => {
-            console.log(`Setting up listener for option ${index}:`, option.dataset.color);
+        // シンプルなアプローチ: イベント委譲を使用
+        const step1Container = document.getElementById('step1');
+        if (!step1Container) {
+            console.error('Step1 container not found!');
+            return;
+        }
+        
+        // 既存のイベントリスナーを削除
+        const newContainer = step1Container.cloneNode(true);
+        step1Container.parentNode.replaceChild(newContainer, step1Container);
+        
+        // 新しいコンテナにイベント委譲でリスナーを追加
+        newContainer.addEventListener('click', (e) => {
+            const colorOption = e.target.closest('.color-option');
+            if (!colorOption) return;
             
-            // Remove existing listeners to prevent duplicates
-            option.replaceWith(option.cloneNode(true));
+            const color = colorOption.dataset.color;
+            console.log('Color clicked:', color);
+            
+            if (!color) {
+                console.error('No color data found');
+                return;
+            }
+            
+            // 視覚的フィードバック
+            colorOption.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                colorOption.style.transform = '';
+            }, 150);
+            
+            if (color === 'random') {
+                const randomColor = this.selectRandomColor();
+                if (randomColor) {
+                    console.log(`Random color selected: ${randomColor}`);
+                    this.handleColorSelection(randomColor);
+                } else {
+                    alert('利用可能な色がありません');
+                }
+            } else {
+                console.log(`Color selected: ${color}`);
+                this.handleColorSelection(color);
+            }
         });
         
-        // Re-select after cloning
-        const newColorOptions = document.querySelectorAll('#step1 .color-option');
-        newColorOptions.forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                console.log('Color option clicked:', e.currentTarget.dataset.color);
-                const color = e.currentTarget.dataset.color;
-                
-                if (!color) {
-                    console.error('No color data found on clicked element');
-                    return;
-                }
-                
-                if (color === 'random') {
-                    const randomColor = this.selectRandomColor();
-                    if (randomColor) {
-                        console.log(`Player ${this.currentPlayerIndex + 1} randomly selected: ${randomColor}`);
-                        this.selectColorForCurrentPlayer(randomColor);
-                    } else {
-                        alert('利用可能な色がありません');
+        console.log('Color event listeners set up with event delegation');
+    }
+    
+    handleColorSelection(color) {
+        console.log(`Handling color selection: ${color} for player ${this.currentPlayerIndex + 1}`);
+        
+        // 色を選択
+        this.selectedColors[this.currentPlayerIndex] = color;
+        
+        // プレイヤー名を更新
+        if (this.currentPlayerIndex === 0 && !this.isCustomName.red) {
+            this.playerNames.red = this.colorDefaultNames[color] || color;
+        } else if (this.currentPlayerIndex === 1 && !this.isCustomName.white) {
+            this.playerNames.white = this.colorDefaultNames[color] || color;
+        }
+        
+        console.log('Current selected colors:', this.selectedColors);
+        console.log('Current player names:', this.playerNames);
+        
+        // 次のプレイヤーまたは完了処理
+        this.currentPlayerIndex++;
+        
+        if (this.humanPlayers === 1) {
+            // 1人モードの場合、CPUの色を自動選択
+            if (this.currentPlayerIndex === 1) {
+                const availableColors = this.getAvailableColors();
+                if (availableColors.length > 0) {
+                    this.selectedColors[1] = availableColors[0];
+                    if (!this.isCustomName.white) {
+                        this.playerNames.white = this.colorDefaultNames[availableColors[0]];
                     }
-                } else {
-                    console.log(`Player ${this.currentPlayerIndex + 1} selected: ${color}`);
-                    this.selectColorForCurrentPlayer(color);
+                    console.log(`CPU auto-selected: ${availableColors[0]}`);
                 }
-            });
-        });
-        console.log('Color event listeners set up complete');
+                this.finishColorSelection();
+            }
+        } else {
+            // 2人モードの場合
+            if (this.currentPlayerIndex >= 2) {
+                this.finishColorSelection();
+            } else {
+                this.updateColorStepTitle();
+                this.updateAvailableColors();
+            }
+        }
+    }
+    
+    finishColorSelection() {
+        console.log('Finishing color selection');
+        console.log('Final selected colors:', this.selectedColors);
+        console.log('Final player names:', this.playerNames);
+        
+        this.showStep3();
     }
     
     setupColorSelectionNameEditListeners() {
@@ -294,7 +351,8 @@ class OthelloGame {
         });
     }
     
-    selectColorForCurrentPlayer(color) {
+    // 古い関数 - 新しいhandleColorSelectionを使用
+    /* selectColorForCurrentPlayer(color) {
         console.log(`Selecting color ${color} for player ${this.currentPlayerIndex + 1}`);
         console.log('Before selection - selectedColors:', this.selectedColors);
         
@@ -355,7 +413,7 @@ class OthelloGame {
             this.currentPlayerIndex = 0;
             this.showStep3();
         }
-    }
+    } */
     
     updateAvailableColors() {
         const availableColors = this.getAvailableColors();
@@ -443,15 +501,22 @@ class OthelloGame {
     }
     
     resetColorSelection() {
+        console.log('Resetting color selection...');
+        
         this.colorSelectionStep = 1;
         this.currentPlayerIndex = 0;
         
         // 色選択をリセット（nullで初期化して選択可能にする）
         this.selectedColors = [null, null];
         
-        document.getElementById('step1').style.display = 'block';
-        document.getElementById('step2').style.display = 'none';
-        document.getElementById('step3').style.display = 'none';
+        // ステップの表示を調整
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        
+        if (step1) step1.style.display = 'block';
+        if (step2) step2.style.display = 'none';
+        if (step3) step3.style.display = 'none';
         
         // 全ての色選択オプションを表示して有効化
         document.querySelectorAll('#step1 .color-option').forEach(option => {
@@ -464,6 +529,8 @@ class OthelloGame {
         
         // 色選択イベントリスナーを再設定
         this.setupColorEventListeners();
+        
+        console.log('Color selection reset complete');
     }
     
     
