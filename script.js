@@ -41,10 +41,17 @@ class OthelloGame {
         this.board = Array(this.boardSize).fill(null).map(() => Array(this.boardSize).fill(null));
         
         const mid = Math.floor(this.boardSize / 2);
-        this.board[mid - 1][mid - 1] = 'white';
-        this.board[mid - 1][mid] = 'red';
-        this.board[mid][mid - 1] = 'red';
-        this.board[mid][mid] = 'white';
+        
+        // 選択された色を使用
+        const player1Color = this.selectedColors[0] || 'red';
+        const player2Color = this.selectedColors[1] || 'white';
+        
+        console.log('Initializing board with colors:', player1Color, player2Color);
+        
+        this.board[mid - 1][mid - 1] = player2Color;  // プレイヤー2の色
+        this.board[mid - 1][mid] = player1Color;     // プレイヤー1の色
+        this.board[mid][mid - 1] = player1Color;     // プレイヤー1の色
+        this.board[mid][mid] = player2Color;         // プレイヤー2の色
         
         this.currentPlayer = this.firstPlayer; // じゃんけんで決まった先攻プレイヤーを使用
         this.gameOver = false;
@@ -335,6 +342,23 @@ class OthelloGame {
         console.log('Final selected colors:', this.selectedColors);
         console.log('Final player names:', this.playerNames);
         
+        // プレイヤーの色マッピングを更新
+        const player1Color = this.selectedColors[0];
+        const player2Color = this.selectedColors[1];
+        
+        // playerNamesオブジェクトを選択された色でマッピング
+        const newPlayerNames = {};
+        newPlayerNames[player1Color] = this.playerNames.red || this.colorDefaultNames[player1Color];
+        newPlayerNames[player2Color] = this.playerNames.white || this.colorDefaultNames[player2Color];
+        
+        this.playerNames = newPlayerNames;
+        
+        // デフォルトの先攻プレイヤーをプレイヤー1の色に設定
+        this.firstPlayer = player1Color;
+        
+        console.log('Updated player names mapping:', this.playerNames);
+        console.log('Default first player:', this.firstPlayer);
+        
         this.showStep3();
     }
     
@@ -474,20 +498,15 @@ class OthelloGame {
     updateStep3Preview() {
         // 2人モードの場合は固定レイアウトの色とプレイヤー名を更新
         if (this.selectedColors.length === 2) {
-            const colorNames = {
-                red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
-                orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
-                gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
-                purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
-            };
-            
             // プレイヤー1の色とプレイヤー名を更新
             document.getElementById('finalPlayer1Preview').className = `preview-piece color-${this.selectedColors[0]}`;
-            document.getElementById('finalPlayer1ColorName').textContent = this.playerNames.red;
+            const player1Name = this.playerNames[this.selectedColors[0]] || this.colorDefaultNames[this.selectedColors[0]];
+            document.getElementById('finalPlayer1ColorName').textContent = player1Name;
             
             // プレイヤー2の色とプレイヤー名を更新
             document.getElementById('finalPlayer2Preview').className = `preview-piece color-${this.selectedColors[1]}`;
-            document.getElementById('finalPlayer2ColorName').textContent = this.playerNames.white;
+            const player2Name = this.playerNames[this.selectedColors[1]] || this.colorDefaultNames[this.selectedColors[1]];
+            document.getElementById('finalPlayer2ColorName').textContent = player2Name;
             
             // CPUモードの場合は名前編集ボタンを無効化
             if (this.gameMode === 'cpu') {
@@ -609,7 +628,7 @@ class OthelloGame {
         };
         
         let result = '';
-        let firstPlayer = 'red'; // デフォルトは赤から
+        let firstPlayer = this.selectedColors[0]; // プレイヤー1の選択色をデフォルトに
         
         if (playerChoice === computerChoice) {
             result = `あいこ！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}`;
@@ -620,11 +639,11 @@ class OthelloGame {
             (playerChoice === 'scissors' && computerChoice === 'paper')
         ) {
             result = `あなたのかち！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}<br>あなたから先にはじめます！`;
-            firstPlayer = 'red';
+            firstPlayer = this.selectedColors[0]; // プレイヤー1（人間）の色
             this.jankenDecided = true;
         } else {
             result = `コンピューターのかち！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}<br>コンピューターから先にはじめます！`;
-            firstPlayer = 'white';
+            firstPlayer = this.selectedColors[1]; // プレイヤー2（CPU）の色
             this.jankenDecided = true;
         }
         
@@ -649,21 +668,20 @@ class OthelloGame {
     }
     
     setupFirstPlayerSelector() {
-        // 色とプレイヤー名を更新
-        const colorNames = {
-            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
-            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
-            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
-            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
-        };
-        
         // プレビュー色を設定
         document.getElementById('firstBtnPlayer1Color').className = `preview-piece color-${this.selectedColors[0]}`;
         document.getElementById('firstBtnPlayer2Color').className = `preview-piece color-${this.selectedColors[1]}`;
         
-        // プレイヤー名を設定（色名または手入力名）
-        document.getElementById('firstBtnPlayer1Name').textContent = this.playerNames.red;
-        document.getElementById('firstBtnPlayer2Name').textContent = this.playerNames.white;
+        // プレイヤー名を設定
+        const player1Name = this.playerNames[this.selectedColors[0]] || this.colorDefaultNames[this.selectedColors[0]];
+        const player2Name = this.playerNames[this.selectedColors[1]] || this.colorDefaultNames[this.selectedColors[1]];
+        
+        document.getElementById('firstBtnPlayer1Name').textContent = player1Name;
+        document.getElementById('firstBtnPlayer2Name').textContent = player2Name;
+        
+        // ボタンのdata-playerを選択された色に設定
+        document.getElementById('player1FirstBtn').dataset.player = this.selectedColors[0];
+        document.getElementById('player2FirstBtn').dataset.player = this.selectedColors[1];
         
         // 先攻選択ボタンのイベントリスナー
         document.querySelectorAll('.first-player-btn').forEach(btn => {
@@ -674,13 +692,14 @@ class OthelloGame {
                 // 現在の選択を強調
                 e.currentTarget.classList.add('selected');
                 
-                // 先攻プレイヤーを設定
+                // 先攻プレイヤーを設定（選択された色を使用）
                 this.firstPlayer = e.currentTarget.dataset.player;
+                console.log('First player set to:', this.firstPlayer);
             });
         });
         
-        // デフォルトはプレイヤー1（red）を先攻に設定
-        this.firstPlayer = 'red';
+        // デフォルトはプレイヤー1の選択色を先攻に設定
+        this.firstPlayer = this.selectedColors[0];
     }
 
     setupGameEventListeners() {
