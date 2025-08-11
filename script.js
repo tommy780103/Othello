@@ -59,7 +59,7 @@ class OthelloGame {
         this.renderBoard();
         this.updateValidMoves();
         this.updateScore();
-        this.updateMessage(`${this.playerNames[this.currentPlayer]}のばんです！コマをおいてね`);
+        this.updateMessage(`${this.getDisplayNameForColor(this.currentPlayer)}のばんです！コマをおいてね`);
     }
     
     
@@ -1260,14 +1260,22 @@ class OthelloGame {
             this.currentPlayer = this.selectedColors[0];
         }
         this.updateTurnIndicator();
-        this.updateMessage(`${this.playerNames[this.currentPlayer]}のばんです！`);
+        this.updateMessage(`${this.getDisplayNameForColor(this.currentPlayer)}のばんです！`);
     }
     
     updateTurnIndicator() {
         const turnIndicator = document.getElementById('turnIndicatorText');
-        turnIndicator.textContent = this.playerNames[this.currentPlayer];
         const roleClass = (this.currentPlayer === this.selectedColors[0]) ? 'red' : 'white';
+        turnIndicator.textContent = this.getDisplayNameForColor(this.currentPlayer);
         turnIndicator.className = `turn-indicator ${roleClass}`;
+    }
+
+    getDisplayNameForColor(color) {
+        const role = (color === this.selectedColors[0]) ? 'red' : 'white';
+        const id = role === 'red' ? 'redName' : 'whiteName';
+        const el = document.getElementById(id);
+        const domName = el && typeof el.textContent === 'string' ? el.textContent.trim() : '';
+        return domName || this.playerNames[color] || this.colorDefaultNames[color] || '';
     }
 
     getRoleClassForColor(color) {
