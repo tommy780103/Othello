@@ -10,12 +10,13 @@ class OthelloGame {
             white: 'しろ'
         };
         this.gameMode = null; // 'pvp' or 'cpu'
+        this.playerCount = 2; // 2, 3, or 4
         this.difficulty = null; // 1-5
         this.isAiThinking = false;
         this.currentEditingPlayer = null; // 'red' or 'white'
         this.selectedColors = ['red', 'white']; // デフォルト色
         this.colorSelectionStep = 1; // 1: プレイヤー1選択中, 2: プレイヤー2選択中, 0: 完了
-        this.allColors = ['red', 'white', 'black', 'blue', 'orange', 'pink', 'green', 'yellow', 'gray', 'gold', 'silver', 'lime', 'purple', 'cyan', 'brown'];
+        this.allColors = ['red', 'white', 'black', 'blue', 'orange', 'pink', 'green', 'yellow', 'gray', 'gold', 'silver', 'lime', 'purple', 'cyan', 'brown', 'wood1', 'wood2', 'wood3', 'marble', 'stone'];
         this.firstPlayer = 'red'; // じゃんけんで決まる先攻プレイヤー
         this.jankenDecided = false; // じゃんけんで先攻が決まったかどうか
         this.isCustomName = { red: false, white: false }; // 手入力で名前が変更されたかどうか
@@ -23,7 +24,8 @@ class OthelloGame {
             red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
             orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
             gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
-            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
+            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ',
+            wood1: 'きめ1', wood2: 'きめ2', wood3: 'きめ3', marble: 'だいり', stone: 'いし'
         };
         
         this.loadSettings();
@@ -53,6 +55,32 @@ class OthelloGame {
     }
     
     setupMenuEventListeners() {
+        // プレイヤー数選択ボタン
+        document.querySelectorAll('.player-count-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // 以前の選択を解除
+                document.querySelectorAll('.player-count-btn').forEach(b => b.classList.remove('selected'));
+                
+                // 現在の選択を強調
+                e.currentTarget.classList.add('selected');
+                
+                this.playerCount = parseInt(e.currentTarget.dataset.count);
+                this.updateModeButtonText();
+                
+                // 3人以上の場合はCPUモードを無効化
+                const cpuBtn = document.querySelector('[data-mode="cpu"]');
+                if (this.playerCount > 2) {
+                    cpuBtn.style.opacity = '0.3';
+                    cpuBtn.style.pointerEvents = 'none';
+                    cpuBtn.title = '3人以上はPvPのみです';
+                } else {
+                    cpuBtn.style.opacity = '1';
+                    cpuBtn.style.pointerEvents = 'auto';
+                    cpuBtn.title = '';
+                }
+            });
+        });
+
         // モード選択ボタン
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -171,6 +199,11 @@ class OthelloGame {
                 
                 option.addEventListener('click', () => {
                     this.selectedColors[1] = color;
+                    // プレイヤー2の色が選択された時点で名前を更新
+                    if (!this.isCustomName.white && this.gameMode !== 'cpu') {
+                        this.playerNames.white = this.colorDefaultNames[color];
+                        document.getElementById('whiteName').textContent = this.playerNames.white;
+                    }
                     this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
                     this.saveSettings();
                     this.colorSelectionStep = 0;
@@ -331,6 +364,16 @@ class OthelloGame {
         // デフォルトはプレイヤー1（red）を先攻に設定
         this.firstPlayer = 'red';
     }
+    
+    updateModeButtonText() {
+        const pvpModeText = document.getElementById('pvpModeText');
+        const playerCountText = {
+            2: 'ふたりであそぶ',
+            3: 'さんにんであそぶ',
+            4: 'よにんであそぶ'
+        };
+        pvpModeText.textContent = playerCountText[this.playerCount] || 'みんなであそぶ';
+    }
 
     setupGameEventListeners() {
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
@@ -401,6 +444,18 @@ class OthelloGame {
         document.querySelectorAll('.first-player-btn').forEach(btn => btn.classList.remove('selected'));
         document.getElementById('player1FirstBtn').classList.add('selected');
         
+        // プレイヤー数選択をリセット（デフォルトは2人）
+        document.querySelectorAll('.player-count-btn').forEach(btn => btn.classList.remove('selected'));
+        document.querySelector('[data-count="2"]').classList.add('selected');
+        this.playerCount = 2;
+        this.updateModeButtonText();
+        
+        // CPUボタンを有効化
+        const cpuBtn = document.querySelector('[data-mode="cpu"]');
+        cpuBtn.style.opacity = '1';
+        cpuBtn.style.pointerEvents = 'auto';
+        cpuBtn.title = '';
+        
         // メッセージエリアを隠す
         document.getElementById('messageArea').innerHTML = '';
     }
@@ -420,14 +475,17 @@ class OthelloGame {
             document.getElementById('swapBtn').style.opacity = '0.3';
             document.getElementById('swapBtn').style.pointerEvents = 'none';
         } else {
-            this.playerNames.white = 'しろ';
-            document.getElementById('whiteName').textContent = 'しろ';
+            // PvPモードでは色選択で設定された名前を保持（上書きしない）
+            document.getElementById('whiteName').textContent = this.playerNames.white;
             document.getElementById('whiteNameBtn').style.opacity = '0.7';
             document.getElementById('whiteNameBtn').style.pointerEvents = 'auto';
             // PvPモードでは名前交換ボタンを有効化
             document.getElementById('swapBtn').style.opacity = '1';
             document.getElementById('swapBtn').style.pointerEvents = 'auto';
         }
+        
+        // 赤プレイヤーの名前も表示更新（色選択で設定された名前を反映）
+        document.getElementById('redName').textContent = this.playerNames.red;
         
         this.init();
         this.setupGameEventListeners();
@@ -1212,6 +1270,46 @@ class OthelloGame {
                 border: '#5d4037',
                 hint: 'rgba(161, 136, 127, 0.4)',
                 hintLight: 'rgba(161, 136, 127, 0.2)'
+            },
+            wood1: {
+                color: '#deb887',
+                gradientStart: '#d2b48c',
+                gradientEnd: '#cd853f',
+                border: '#8b7355',
+                hint: 'rgba(210, 180, 140, 0.4)',
+                hintLight: 'rgba(210, 180, 140, 0.2)'
+            },
+            wood2: {
+                color: '#cd853f',
+                gradientStart: '#deb887',
+                gradientEnd: '#8b4513',
+                border: '#654321',
+                hint: 'rgba(205, 133, 63, 0.4)',
+                hintLight: 'rgba(205, 133, 63, 0.2)'
+            },
+            wood3: {
+                color: '#8b4513',
+                gradientStart: '#daa520',
+                gradientEnd: '#654321',
+                border: '#3e2723',
+                hint: 'rgba(139, 69, 19, 0.4)',
+                hintLight: 'rgba(139, 69, 19, 0.2)'
+            },
+            marble: {
+                color: '#f5f5f5',
+                gradientStart: '#ffffff',
+                gradientEnd: '#d3d3d3',
+                border: '#999999',
+                hint: 'rgba(245, 245, 245, 0.4)',
+                hintLight: 'rgba(245, 245, 245, 0.2)'
+            },
+            stone: {
+                color: '#708090',
+                gradientStart: '#708090',
+                gradientEnd: '#2f4f4f',
+                border: '#1c1c1c',
+                hint: 'rgba(112, 128, 144, 0.4)',
+                hintLight: 'rgba(112, 128, 144, 0.2)'
             }
         };
         
@@ -1265,6 +1363,10 @@ class OthelloGame {
                 }
                 // 色テーマを適用（名前の自動更新も含む）
                 this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
+                
+                // 保存されたプレイヤー名を表示に反映
+                document.getElementById('redName').textContent = this.playerNames.red;
+                document.getElementById('whiteName').textContent = this.playerNames.white;
             } catch (e) {
                 console.log('設定の読み込みに失敗しました');
             }

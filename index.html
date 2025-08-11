@@ -36,10 +36,31 @@
             <!-- ゲームモード選択 -->
             <div class="game-mode-selector" id="gameModeSelector">
                 <h2>あそびかたをえらんでね</h2>
-                <div class="mode-buttons">
+                
+                <!-- プレイヤー数選択 -->
+                <div class="player-count-selector">
+                    <h3>なんにんであそぶ？</h3>
+                    <div class="player-count-buttons">
+                        <button class="player-count-btn selected" data-count="2">
+                            <span class="count-number">2</span>
+                            <span class="count-text">にん</span>
+                        </button>
+                        <button class="player-count-btn" data-count="3">
+                            <span class="count-number">3</span>
+                            <span class="count-text">にん</span>
+                        </button>
+                        <button class="player-count-btn" data-count="4">
+                            <span class="count-number">4</span>
+                            <span class="count-text">にん</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- モード選択（プレイヤー数によって変化） -->
+                <div class="mode-buttons" id="modeButtons">
                     <button class="mode-btn" data-mode="pvp">
                         <span class="mode-icon">👥</span>
-                        <span class="mode-text">ふたりであそぶ</span>
+                        <span class="mode-text" id="pvpModeText">ふたりであそぶ</span>
                     </button>
                     <button class="mode-btn" data-mode="cpu">
                         <span class="mode-icon">🤖</span>
@@ -124,6 +145,26 @@
                                 <div class="color-option" data-color="brown">
                                     <span class="preview-piece color-brown"></span>
                                     <span class="color-name">ちゃいろ</span>
+                                </div>
+                                <div class="color-option" data-color="wood1">
+                                    <span class="preview-piece color-wood1"></span>
+                                    <span class="color-name">きめ1</span>
+                                </div>
+                                <div class="color-option" data-color="wood2">
+                                    <span class="preview-piece color-wood2"></span>
+                                    <span class="color-name">きめ2</span>
+                                </div>
+                                <div class="color-option" data-color="wood3">
+                                    <span class="preview-piece color-wood3"></span>
+                                    <span class="color-name">きめ3</span>
+                                </div>
+                                <div class="color-option" data-color="marble">
+                                    <span class="preview-piece color-marble"></span>
+                                    <span class="color-name">だいり</span>
+                                </div>
+                                <div class="color-option" data-color="stone">
+                                    <span class="preview-piece color-stone"></span>
+                                    <span class="color-name">いし</span>
                                 </div>
                             </div>
                         </div>
