@@ -14,12 +14,24 @@ class OthelloGame {
         this.isAiThinking = false;
         this.currentEditingPlayer = null; // 'red' or 'white'
         this.selectedColors = ['red', 'white']; // デフォルト色
+        this.colorSelectionStep = 1; // 1: プレイヤー1選択中, 2: プレイヤー2選択中, 0: 完了
+        this.allColors = ['red', 'white', 'black', 'blue', 'orange', 'pink', 'green', 'yellow', 'gray', 'gold', 'silver', 'lime', 'purple', 'cyan', 'brown'];
+        this.firstPlayer = 'red'; // じゃんけんで決まる先攻プレイヤー
+        this.jankenDecided = false; // じゃんけんで先攻が決まったかどうか
+        this.isCustomName = { red: false, white: false }; // 手入力で名前が変更されたかどうか
+        this.colorDefaultNames = {
+            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
+            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
+            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
+            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
+        };
         
         this.loadSettings();
         this.setupMenuEventListeners();
         this.setupNameModalEventListeners();
-        this.setupColorEventListeners();
         this.showMenu();
+        
+        // 色選択イベントはshowMenuで初期化される
     }
     
     init() {
@@ -31,7 +43,7 @@ class OthelloGame {
         this.board[mid][mid - 1] = 'red';
         this.board[mid][mid] = 'white';
         
-        this.currentPlayer = 'red';
+        this.currentPlayer = this.firstPlayer; // じゃんけんで決まった先攻プレイヤーを使用
         this.gameOver = false;
         
         this.renderBoard();
@@ -47,7 +59,8 @@ class OthelloGame {
                 const mode = e.currentTarget.dataset.mode;
                 if (mode === 'pvp') {
                     this.gameMode = 'pvp';
-                    this.startGame();
+                    // PvPモードでは色選択に進む
+                    this.resetColorSelection();
                 } else if (mode === 'cpu') {
                     this.gameMode = 'cpu';
                     document.getElementById('difficultySelector').style.display = 'block';
@@ -58,33 +71,224 @@ class OthelloGame {
         // 難易度選択ボタン
         document.querySelectorAll('.diff-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                // 以前の選択を解除
+                document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+                
+                // 現在の選択を強調
+                e.currentTarget.classList.add('selected');
+                
                 this.difficulty = parseInt(e.currentTarget.dataset.level);
-                this.startGame();
+                
+                // 選択した難易度を表示
+                const difficultyNames = {
+                    1: 'ちょうやさしい',
+                    2: 'やさしい', 
+                    3: 'ふつう',
+                    4: 'つよい',
+                    5: 'おにつよ'
+                };
+                
+                document.getElementById('selectedDifficultyText').textContent = 
+                    `${difficultyNames[this.difficulty]}を選んだよ！色をえらんでね`;
+                document.getElementById('difficultySelected').style.display = 'block';
+                
+                // 少し遅延してから色選択に進む（選択状態を確認できるように）
+                setTimeout(() => {
+                    this.resetColorSelection();
+                }, 800);
             });
+        });
+        
+        // ゲーム開始ボタン
+        document.getElementById('startGameBtn').addEventListener('click', () => {
+            this.startGame();
         });
     }
     
     setupColorEventListeners() {
-        // 個別色選択
-        document.querySelectorAll('.color-option').forEach(option => {
+        // Step1の色選択（全色から選択）
+        document.querySelectorAll('#step1 .color-option').forEach(option => {
             option.addEventListener('click', (e) => {
                 const color = e.currentTarget.dataset.color;
-                const player = parseInt(e.currentTarget.dataset.player);
-                
-                if (player === 1) {
-                    this.selectedColors[0] = color;
-                } else {
-                    this.selectedColors[1] = color;
+                this.selectedColors[0] = color;
+                // プレイヤー1の色が選択された時点で名前を更新
+                if (!this.isCustomName.red) {
+                    this.playerNames.red = this.colorDefaultNames[color];
+                    document.getElementById('redName').textContent = this.playerNames.red;
                 }
+                this.showStep2(color);
+            });
+        });
+    }
+    
+    showStep2(selectedColor) {
+        // Step1を隠してStep2を表示
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+        
+        // プレイヤー1の選択した色を表示
+        const colorNames = {
+            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
+            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
+            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
+            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
+        };
+        
+        document.getElementById('player1Preview').className = `preview-piece color-${selectedColor}`;
+        document.getElementById('player1ColorName').textContent = colorNames[selectedColor];
+        
+        // 残りの色を表示
+        this.showRemainingColors(selectedColor);
+    }
+    
+    showRemainingColors(excludeColor) {
+        const remainingContainer = document.getElementById('remainingColors');
+        remainingContainer.innerHTML = '';
+        
+        const colorNames = {
+            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
+            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
+            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
+            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
+        };
+        
+        this.allColors
+            .filter(color => color !== excludeColor)
+            .forEach(color => {
+                const option = document.createElement('div');
+                option.className = 'color-option';
+                option.dataset.color = color;
                 
-                this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
-                this.updateColorSelection();
-                this.saveSettings();
+                const piece = document.createElement('span');
+                piece.className = `preview-piece color-${color}`;
+                
+                const name = document.createElement('span');
+                name.className = 'color-name';
+                name.textContent = colorNames[color];
+                
+                option.appendChild(piece);
+                option.appendChild(name);
+                
+                option.addEventListener('click', () => {
+                    this.selectedColors[1] = color;
+                    this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
+                    this.saveSettings();
+                    this.colorSelectionStep = 0;
+                    this.showStep3();
+                });
+                
+                remainingContainer.appendChild(option);
+            });
+    }
+    
+    showStep3() {
+        // Step2を隠してStep3を表示
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'block';
+        
+        // 色名のマップ
+        const colorNames = {
+            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
+            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
+            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
+            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
+        };
+        
+        // 最終プレビューの要素を更新
+        document.getElementById('finalPlayer1Preview').className = `preview-piece color-${this.selectedColors[0]}`;
+        document.getElementById('finalPlayer1ColorName').textContent = colorNames[this.selectedColors[0]];
+        
+        document.getElementById('finalPlayer2Preview').className = `preview-piece color-${this.selectedColors[1]}`;
+        document.getElementById('finalPlayer2ColorName').textContent = colorNames[this.selectedColors[1]];
+        
+        // PvPモードの場合はじゃんけんを表示
+        if (this.gameMode === 'pvp') {
+            document.getElementById('turnDecision').style.display = 'block';
+            this.setupJankenEventListeners();
+        } else {
+            document.getElementById('turnDecision').style.display = 'none';
+        }
+    }
+    
+    resetColorSelection() {
+        this.colorSelectionStep = 1;
+        document.getElementById('step1').style.display = 'block';
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'none';
+        
+        // 色選択イベントリスナーを再設定
+        this.setupColorEventListeners();
+    }
+    
+    setupJankenEventListeners() {
+        // じゃんけんボタンのイベントリスナー
+        document.querySelectorAll('.janken-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const playerChoice = e.currentTarget.dataset.choice;
+                this.playJanken(playerChoice);
             });
         });
         
-        // 初期選択状態を設定
-        this.updateColorSelection();
+        // もう一度ボタンのイベントリスナー
+        document.getElementById('retryJankenBtn').addEventListener('click', () => {
+            this.resetJanken();
+        });
+    }
+    
+    playJanken(playerChoice) {
+        const choices = ['rock', 'paper', 'scissors'];
+        const computerChoice = choices[Math.floor(Math.random() * choices.length)];
+        
+        const choiceNames = {
+            rock: 'ぐー',
+            paper: 'ぱー', 
+            scissors: 'ちょき'
+        };
+        
+        const choiceEmoji = {
+            rock: '✊',
+            paper: '✋',
+            scissors: '✌️'
+        };
+        
+        let result = '';
+        let firstPlayer = 'red'; // デフォルトは赤から
+        
+        if (playerChoice === computerChoice) {
+            result = `あいこ！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}`;
+            document.getElementById('retryJankenBtn').style.display = 'block';
+        } else if (
+            (playerChoice === 'rock' && computerChoice === 'scissors') ||
+            (playerChoice === 'paper' && computerChoice === 'rock') ||
+            (playerChoice === 'scissors' && computerChoice === 'paper')
+        ) {
+            result = `あなたのかち！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}<br>あなたから先にはじめます！`;
+            firstPlayer = 'red';
+            this.jankenDecided = true;
+        } else {
+            result = `コンピューターのかち！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}<br>コンピューターから先にはじめます！`;
+            firstPlayer = 'white';
+            this.jankenDecided = true;
+        }
+        
+        // じゃんけんの結果を表示
+        document.getElementById('jankenMessage').innerHTML = result;
+        document.getElementById('jankenResult').style.display = 'block';
+        
+        // 結果が決まった場合は先攻を設定
+        if (this.jankenDecided) {
+            this.firstPlayer = firstPlayer;
+            // 1.5秒後にじゃんけん部分を隠す
+            setTimeout(() => {
+                document.getElementById('turnDecision').style.display = 'none';
+            }, 1500);
+        }
+    }
+    
+    resetJanken() {
+        document.getElementById('jankenResult').style.display = 'none';
+        document.getElementById('retryJankenBtn').style.display = 'none';
+        this.jankenDecided = false;
     }
 
     setupGameEventListeners() {
@@ -135,6 +339,21 @@ class OthelloGame {
         document.getElementById('gameBoard').style.display = 'none';
         document.getElementById('gameControls').style.display = 'none';
         document.getElementById('difficultySelector').style.display = 'none';
+        
+        // 色選択をリセット
+        this.resetColorSelection();
+        
+        // じゃんけん関連をリセット
+        this.firstPlayer = 'red';
+        this.jankenDecided = false;
+        document.getElementById('turnDecision').style.display = 'none';
+        
+        // 手入力フラグをリセット（メニューに戻った際は色に応じたデフォルト名に戻る）
+        this.isCustomName = { red: false, white: false };
+        
+        // 難易度選択をリセット
+        document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('selected'));
+        document.getElementById('difficultySelected').style.display = 'none';
         
         // メッセージエリアを隠す
         document.getElementById('messageArea').innerHTML = '';
@@ -751,6 +970,14 @@ class OthelloGame {
         const newName = document.getElementById('nameInput').value.trim();
         
         if (newName && newName.length <= 10) {
+            // 名前が色のデフォルト名と異なる場合は手入力フラグを設定
+            const currentColor = this.currentEditingPlayer === 'red' ? this.selectedColors[0] : this.selectedColors[1];
+            if (newName !== this.colorDefaultNames[currentColor]) {
+                this.isCustomName[this.currentEditingPlayer] = true;
+            } else {
+                this.isCustomName[this.currentEditingPlayer] = false;
+            }
+            
             this.playerNames[this.currentEditingPlayer] = newName;
             document.getElementById(`${this.currentEditingPlayer}Name`).textContent = newName;
             
@@ -761,6 +988,7 @@ class OthelloGame {
             
             this.closeNameModal();
             this.playSound('place');
+            this.saveSettings();
         } else {
             document.getElementById('nameInput').style.borderColor = '#ff6b6b';
             setTimeout(() => {
@@ -808,6 +1036,16 @@ class OthelloGame {
     }
     
     applyColorTheme(color1, color2) {
+        // 手入力で変更されていない場合のみ、色に合わせて名前を更新
+        if (!this.isCustomName.red) {
+            this.playerNames.red = this.colorDefaultNames[color1];
+            document.getElementById('redName').textContent = this.playerNames.red;
+        }
+        if (!this.isCustomName.white && this.gameMode !== 'cpu') {
+            this.playerNames.white = this.colorDefaultNames[color2];
+            document.getElementById('whiteName').textContent = this.playerNames.white;
+        }
+        
         const colorMap = {
             red: {
                 color: '#ff6b6b',
@@ -953,22 +1191,14 @@ class OthelloGame {
     }
     
     updateColorSelection() {
-        document.querySelectorAll('.color-option').forEach(option => {
-            const color = option.dataset.color;
-            const player = parseInt(option.dataset.player);
-            
-            if ((player === 1 && color === this.selectedColors[0]) || 
-                (player === 2 && color === this.selectedColors[1])) {
-                option.classList.add('selected');
-            } else {
-                option.classList.remove('selected');
-            }
-        });
+        // 順番制色選択では不要（選択時に即座に次のステップに進む）
     }
     
     saveSettings() {
         const settings = {
-            selectedColors: this.selectedColors
+            selectedColors: this.selectedColors,
+            playerNames: this.playerNames,
+            isCustomName: this.isCustomName
         };
         localStorage.setItem('othelloSettings', JSON.stringify(settings));
     }
@@ -980,8 +1210,15 @@ class OthelloGame {
                 const settings = JSON.parse(saved);
                 if (settings.selectedColors) {
                     this.selectedColors = settings.selectedColors;
-                    this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
                 }
+                if (settings.playerNames) {
+                    this.playerNames = { ...this.playerNames, ...settings.playerNames };
+                }
+                if (settings.isCustomName) {
+                    this.isCustomName = { ...this.isCustomName, ...settings.isCustomName };
+                }
+                // 色テーマを適用（名前の自動更新も含む）
+                this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
             } catch (e) {
                 console.log('設定の読み込みに失敗しました');
             }

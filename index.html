@@ -55,85 +55,125 @@
                         <button class="diff-btn" data-level="4">つよい</button>
                         <button class="diff-btn" data-level="5">おにつよ</button>
                     </div>
+                    <div class="difficulty-selected" id="difficultySelected" style="display: none;">
+                        <p id="selectedDifficultyText"></p>
+                    </div>
                 </div>
                 
                 <div class="color-selector">
-                    <h3>コマの色をえらんでね</h3>
-                    <div class="individual-color-selection">
-                        <div class="player-color-section">
-                            <h4>プレイヤー1の色</h4>
-                            <div class="color-options">
-                                <div class="color-option" data-color="red" data-player="1">
+                    <div class="sequential-color-selection">
+                        <div class="color-selection-step" id="step1">
+                            <h3>プレイヤー1の色をえらんでね</h3>
+                            <div class="all-color-options">
+                                <div class="color-option" data-color="red">
                                     <span class="preview-piece color-red"></span>
                                     <span class="color-name">あか</span>
                                 </div>
-                                <div class="color-option" data-color="black" data-player="1">
-                                    <span class="preview-piece color-black"></span>
-                                    <span class="color-name">くろ</span>
-                                </div>
-                                <div class="color-option" data-color="orange" data-player="1">
-                                    <span class="preview-piece color-orange"></span>
-                                    <span class="color-name">オレンジ</span>
-                                </div>
-                                <div class="color-option" data-color="pink" data-player="1">
-                                    <span class="preview-piece color-pink"></span>
-                                    <span class="color-name">ピンク</span>
-                                </div>
-                                <div class="color-option" data-color="yellow" data-player="1">
-                                    <span class="preview-piece color-yellow"></span>
-                                    <span class="color-name">きいろ</span>
-                                </div>
-                                <div class="color-option" data-color="gold" data-player="1">
-                                    <span class="preview-piece color-gold"></span>
-                                    <span class="color-name">きん</span>
-                                </div>
-                                <div class="color-option" data-color="lime" data-player="1">
-                                    <span class="preview-piece color-lime"></span>
-                                    <span class="color-name">きみどり</span>
-                                </div>
-                                <div class="color-option" data-color="purple" data-player="1">
-                                    <span class="preview-piece color-purple"></span>
-                                    <span class="color-name">むらさき</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="vs-divider">VS</div>
-                        <div class="player-color-section">
-                            <h4>プレイヤー2の色</h4>
-                            <div class="color-options">
-                                <div class="color-option" data-color="white" data-player="2">
+                                <div class="color-option" data-color="white">
                                     <span class="preview-piece color-white"></span>
                                     <span class="color-name">しろ</span>
                                 </div>
-                                <div class="color-option" data-color="blue" data-player="2">
-                                    <span class="preview-piece color-blue"></span>
-                                    <span class="color-name">あお</span>
-                                </div>
-                                <div class="color-option" data-color="green" data-player="2">
-                                    <span class="preview-piece color-green"></span>
-                                    <span class="color-name">みどり</span>
-                                </div>
-                                <div class="color-option" data-color="gray" data-player="2">
-                                    <span class="preview-piece color-gray"></span>
-                                    <span class="color-name">グレー</span>
-                                </div>
-                                <div class="color-option" data-color="silver" data-player="2">
-                                    <span class="preview-piece color-silver"></span>
-                                    <span class="color-name">ぎん</span>
-                                </div>
-                                <div class="color-option" data-color="black" data-player="2">
+                                <div class="color-option" data-color="black">
                                     <span class="preview-piece color-black"></span>
                                     <span class="color-name">くろ</span>
                                 </div>
-                                <div class="color-option" data-color="cyan" data-player="2">
+                                <div class="color-option" data-color="blue">
+                                    <span class="preview-piece color-blue"></span>
+                                    <span class="color-name">あお</span>
+                                </div>
+                                <div class="color-option" data-color="orange">
+                                    <span class="preview-piece color-orange"></span>
+                                    <span class="color-name">オレンジ</span>
+                                </div>
+                                <div class="color-option" data-color="pink">
+                                    <span class="preview-piece color-pink"></span>
+                                    <span class="color-name">ピンク</span>
+                                </div>
+                                <div class="color-option" data-color="green">
+                                    <span class="preview-piece color-green"></span>
+                                    <span class="color-name">みどり</span>
+                                </div>
+                                <div class="color-option" data-color="yellow">
+                                    <span class="preview-piece color-yellow"></span>
+                                    <span class="color-name">きいろ</span>
+                                </div>
+                                <div class="color-option" data-color="gray">
+                                    <span class="preview-piece color-gray"></span>
+                                    <span class="color-name">グレー</span>
+                                </div>
+                                <div class="color-option" data-color="gold">
+                                    <span class="preview-piece color-gold"></span>
+                                    <span class="color-name">きん</span>
+                                </div>
+                                <div class="color-option" data-color="silver">
+                                    <span class="preview-piece color-silver"></span>
+                                    <span class="color-name">ぎん</span>
+                                </div>
+                                <div class="color-option" data-color="lime">
+                                    <span class="preview-piece color-lime"></span>
+                                    <span class="color-name">きみどり</span>
+                                </div>
+                                <div class="color-option" data-color="purple">
+                                    <span class="preview-piece color-purple"></span>
+                                    <span class="color-name">むらさき</span>
+                                </div>
+                                <div class="color-option" data-color="cyan">
                                     <span class="preview-piece color-cyan"></span>
                                     <span class="color-name">みずいろ</span>
                                 </div>
-                                <div class="color-option" data-color="brown" data-player="2">
+                                <div class="color-option" data-color="brown">
                                     <span class="preview-piece color-brown"></span>
                                     <span class="color-name">ちゃいろ</span>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="color-selection-step" id="step2" style="display: none;">
+                            <h3>プレイヤー2の色をえらんでね</h3>
+                            <div class="chosen-color-display">
+                                <span>プレイヤー1：</span>
+                                <div class="chosen-preview">
+                                    <span class="preview-piece" id="player1Preview"></span>
+                                    <span id="player1ColorName"></span>
+                                </div>
+                            </div>
+                            <div class="remaining-color-options" id="remainingColors">
+                                <!-- 残りの色がJavaScriptで生成されます -->
+                            </div>
+                        </div>
+                        
+                        <div class="color-selection-step" id="step3" style="display: none;">
+                            <h3>色がきまりました！</h3>
+                            <div class="final-color-display">
+                                <div class="player-final-color">
+                                    <span>プレイヤー1</span>
+                                    <div class="final-preview">
+                                        <span class="preview-piece" id="finalPlayer1Preview"></span>
+                                        <span id="finalPlayer1ColorName"></span>
+                                    </div>
+                                </div>
+                                <div class="vs-final">VS</div>
+                                <div class="player-final-color">
+                                    <span>プレイヤー2</span>
+                                    <div class="final-preview">
+                                        <span class="preview-piece" id="finalPlayer2Preview"></span>
+                                        <span id="finalPlayer2ColorName"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="turn-decision" id="turnDecision" style="display: none;">
+                                <h4>だれからはじめる？じゃんけんで決めよう！</h4>
+                                <div class="janken-options">
+                                    <button class="janken-btn" data-choice="rock">✊ぐー</button>
+                                    <button class="janken-btn" data-choice="paper">✋ぱー</button>
+                                    <button class="janken-btn" data-choice="scissors">✌️ちょき</button>
+                                </div>
+                                <div class="janken-result" id="jankenResult" style="display: none;">
+                                    <p id="jankenMessage"></p>
+                                    <button class="btn-retry-janken" id="retryJankenBtn" style="display: none;">もういちど</button>
+                                </div>
+                            </div>
+                            <button class="btn-start-game" id="startGameBtn">あそぶ！</button>
                         </div>
                     </div>
                 </div>
