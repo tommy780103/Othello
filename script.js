@@ -32,7 +32,6 @@ class OthelloGame {
         this.loadSettings();
         this.setupMenuEventListeners();
         this.setupNameModalEventListeners();
-        this.setupColorEventListeners(); // 最初から設定
         this.setupColorSelectionNameEditListeners();
         this.showMenu();
     }
@@ -87,6 +86,10 @@ class OthelloGame {
                 
                 // 人数選択スキップして直接色選択へ
                 document.getElementById('humanPlayerSelector').style.display = 'none';
+                
+                // 色選択をリセットして表示
+                this.resetColorSelection();
+                console.log('Player selection complete, showing color selection');
             });
         });
 
@@ -236,9 +239,23 @@ class OthelloGame {
     
     setupColorEventListeners() {
         console.log('Setting up color event listeners...');
-        // 通常の色選択（ランダムを含む）
-        document.querySelectorAll('#step1 .color-option').forEach(option => {
+        const colorOptions = document.querySelectorAll('#step1 .color-option');
+        console.log('Found color options:', colorOptions.length);
+        
+        colorOptions.forEach((option, index) => {
+            console.log(`Setting up listener for option ${index}:`, option.dataset.color);
+            
+            // Remove existing listeners to prevent duplicates
+            option.replaceWith(option.cloneNode(true));
+        });
+        
+        // Re-select after cloning
+        const newColorOptions = document.querySelectorAll('#step1 .color-option');
+        newColorOptions.forEach(option => {
             option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 console.log('Color option clicked:', e.currentTarget.dataset.color);
                 const color = e.currentTarget.dataset.color;
                 
@@ -444,6 +461,9 @@ class OthelloGame {
         
         // ステップタイトルを更新
         this.updateColorStepTitle();
+        
+        // 色選択イベントリスナーを再設定
+        this.setupColorEventListeners();
     }
     
     
