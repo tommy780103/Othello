@@ -11,23 +11,12 @@
         <header>
             <h1>イロオセロ</h1>
             <div class="score-board" id="scoreBoard" style="display: none;">
-                <div class="score red-score">
-                    <div class="player-info">
-                        <span class="score-label" id="redName">あか</span>
-                        <button class="name-edit-btn" id="redNameBtn" title="名前をかえる">✏️</button>
-                    </div>
-                    <span class="score-value" id="redScore">2</span>
+                <div class="multiplayer-scores" id="multiplayerScores">
+                    <!-- 多人数用スコアボードがJavaScriptで生成されます -->
                 </div>
                 <div class="current-turn" id="currentTurn">
                     <span>いまのばん：</span>
-                    <span class="turn-indicator red" id="turnIndicatorText">あか</span>
-                </div>
-                <div class="score white-score">
-                    <div class="player-info">
-                        <span class="score-label" id="whiteName">しろ</span>
-                        <button class="name-edit-btn" id="whiteNameBtn" title="名前をかえる">✏️</button>
-                    </div>
-                    <span class="score-value" id="whiteScore">2</span>
+                    <span class="turn-indicator" id="turnIndicatorText">プレイヤー1</span>
                 </div>
             </div>
         </header>

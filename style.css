@@ -54,11 +54,21 @@ h1 {
 
 .score-board {
     display: flex;
-    justify-content: space-around;
+    flex-direction: column;
     align-items: center;
     background: #f8f9fa;
     border-radius: 20px;
     padding: 15px;
+    gap: 15px;
+}
+
+.multiplayer-scores {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    width: 100%;
 }
 
 .score {
