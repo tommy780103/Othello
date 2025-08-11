@@ -161,7 +161,22 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="turn-decision" id="turnDecision" style="display: none;">
+                            <div class="turn-decision" id="turnDecisionPvP" style="display: none;">
+                                <h4>だれからはじめる？</h4>
+                                <div class="first-player-selector">
+                                    <button class="first-player-btn selected" id="player1FirstBtn" data-player="red">
+                                        <span class="preview-piece" id="firstBtnPlayer1Color"></span>
+                                        <span id="firstBtnPlayer1Name">プレイヤー1</span>
+                                        から
+                                    </button>
+                                    <button class="first-player-btn" id="player2FirstBtn" data-player="white">
+                                        <span class="preview-piece" id="firstBtnPlayer2Color"></span>
+                                        <span id="firstBtnPlayer2Name">プレイヤー2</span>
+                                        から
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="turn-decision" id="turnDecisionCpu" style="display: none;">
                                 <h4>だれからはじめる？じゃんけんで決めよう！</h4>
                                 <div class="janken-options">
                                     <button class="janken-btn" data-choice="rock">✊ぐー</button>

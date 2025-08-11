@@ -201,12 +201,18 @@ class OthelloGame {
         document.getElementById('finalPlayer2Preview').className = `preview-piece color-${this.selectedColors[1]}`;
         document.getElementById('finalPlayer2ColorName').textContent = colorNames[this.selectedColors[1]];
         
-        // PvPモードの場合はじゃんけんを表示
+        // モードに応じて先攻選択UIを表示
         if (this.gameMode === 'pvp') {
-            document.getElementById('turnDecision').style.display = 'block';
+            document.getElementById('turnDecisionPvP').style.display = 'block';
+            document.getElementById('turnDecisionCpu').style.display = 'none';
+            this.setupFirstPlayerSelector();
+        } else if (this.gameMode === 'cpu') {
+            document.getElementById('turnDecisionPvP').style.display = 'none';
+            document.getElementById('turnDecisionCpu').style.display = 'block';
             this.setupJankenEventListeners();
         } else {
-            document.getElementById('turnDecision').style.display = 'none';
+            document.getElementById('turnDecisionPvP').style.display = 'none';
+            document.getElementById('turnDecisionCpu').style.display = 'none';
         }
     }
     
@@ -280,7 +286,7 @@ class OthelloGame {
             this.firstPlayer = firstPlayer;
             // 1.5秒後にじゃんけん部分を隠す
             setTimeout(() => {
-                document.getElementById('turnDecision').style.display = 'none';
+                document.getElementById('turnDecisionCpu').style.display = 'none';
             }, 1500);
         }
     }
@@ -289,6 +295,41 @@ class OthelloGame {
         document.getElementById('jankenResult').style.display = 'none';
         document.getElementById('retryJankenBtn').style.display = 'none';
         this.jankenDecided = false;
+    }
+    
+    setupFirstPlayerSelector() {
+        // 色とプレイヤー名を更新
+        const colorNames = {
+            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
+            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
+            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
+            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
+        };
+        
+        // プレビュー色を設定
+        document.getElementById('firstBtnPlayer1Color').className = `preview-piece color-${this.selectedColors[0]}`;
+        document.getElementById('firstBtnPlayer2Color').className = `preview-piece color-${this.selectedColors[1]}`;
+        
+        // プレイヤー名を設定（色名または手入力名）
+        document.getElementById('firstBtnPlayer1Name').textContent = this.playerNames.red;
+        document.getElementById('firstBtnPlayer2Name').textContent = this.playerNames.white;
+        
+        // 先攻選択ボタンのイベントリスナー
+        document.querySelectorAll('.first-player-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // 以前の選択を解除
+                document.querySelectorAll('.first-player-btn').forEach(b => b.classList.remove('selected'));
+                
+                // 現在の選択を強調
+                e.currentTarget.classList.add('selected');
+                
+                // 先攻プレイヤーを設定
+                this.firstPlayer = e.currentTarget.dataset.player;
+            });
+        });
+        
+        // デフォルトはプレイヤー1（red）を先攻に設定
+        this.firstPlayer = 'red';
     }
 
     setupGameEventListeners() {
@@ -346,7 +387,8 @@ class OthelloGame {
         // じゃんけん関連をリセット
         this.firstPlayer = 'red';
         this.jankenDecided = false;
-        document.getElementById('turnDecision').style.display = 'none';
+        document.getElementById('turnDecisionPvP').style.display = 'none';
+        document.getElementById('turnDecisionCpu').style.display = 'none';
         
         // 手入力フラグをリセット（メニューに戻った際は色に応じたデフォルト名に戻る）
         this.isCustomName = { red: false, white: false };
@@ -354,6 +396,10 @@ class OthelloGame {
         // 難易度選択をリセット
         document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('selected'));
         document.getElementById('difficultySelected').style.display = 'none';
+        
+        // 先攻選択をリセット（デフォルトはプレイヤー1）
+        document.querySelectorAll('.first-player-btn').forEach(btn => btn.classList.remove('selected'));
+        document.getElementById('player1FirstBtn').classList.add('selected');
         
         // メッセージエリアを隠す
         document.getElementById('messageArea').innerHTML = '';

@@ -805,6 +805,49 @@ h1 {
     transform: translateY(-1px);
 }
 
+/* 先攻選択ボタン（PvP用） */
+.first-player-selector {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.first-player-btn {
+    background: white;
+    border: 3px solid #dfe6e9;
+    border-radius: 15px;
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.first-player-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: #a29bfe;
+}
+
+.first-player-btn.selected {
+    background: #a29bfe;
+    color: white;
+    border-color: #a29bfe;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(162, 155, 254, 0.3);
+}
+
+.first-player-btn.selected:hover {
+    background: #6c5ce7;
+    border-color: #6c5ce7;
+}
+
 .preview-piece {
     width: 30px;
     height: 30px;
