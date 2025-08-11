@@ -19,7 +19,7 @@ class OthelloGame {
         this.colorSelectionStep = 1; // 1: プレイヤー1選択中, 2: プレイヤー2選択中, 0: 完了
         this.currentPlayerIndex = 0; // 現在色を選択中のプレイヤーインデックス
         this.allColors = ['red', 'white', 'black', 'blue', 'orange', 'pink', 'green', 'yellow', 'gray', 'gold', 'silver', 'lime', 'purple', 'cyan', 'brown'];
-        this.firstPlayer = 'red'; // じゃんけんで決まる先攻プレイヤー
+        this.firstPlayer = 'red'; // じゃんけんで決まる先攻プレイヤー（デフォルト値）
         this.jankenDecided = false; // じゃんけんで先攻が決まったかどうか
         this.isCustomName = { red: false, white: false }; // 手入力で名前が変更されたかどうか
         this.colorDefaultNames = {
@@ -705,28 +705,10 @@ class OthelloGame {
     setupGameEventListeners() {
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
         document.getElementById('playAgainBtn').addEventListener('click', () => this.reset());
-        document.getElementById('hintBtn').addEventListener('click', () => this.showHint());
-        document.getElementById('skipBtn').addEventListener('click', () => this.skipTurn());
-        document.getElementById('swapBtn').addEventListener('click', () => this.swapPlayerNames());
-        document.getElementById('menuBtn').addEventListener('click', () => this.showMenu());
-        
-        // 2人モード用の名前変更ボタン
-        const redNameBtn = document.getElementById('redNameBtn');
-        const whiteNameBtn = document.getElementById('whiteNameBtn');
-        
-        if (redNameBtn) {
-            redNameBtn.addEventListener('click', () => {
-                this.showNameModal('red');
-            });
-        }
-        
-        if (whiteNameBtn) {
-            whiteNameBtn.addEventListener('click', () => {
-                if (this.gameMode !== 'cpu') {
-                    this.showNameModal('white');
-                }
-            });
-        }
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            console.log('Menu button clicked');
+            this.showMenu();
+        });
     }
     
     
@@ -756,39 +738,53 @@ class OthelloGame {
     }
 
     showMenu() {
-        document.getElementById('gameModeSelector').style.display = 'block';
-        document.getElementById('gameBoard').style.display = 'none';
-        document.getElementById('gameControls').style.display = 'none';
-        document.getElementById('difficultySelector').style.display = 'none';
-        document.getElementById('humanPlayerSelector').style.display = 'none';
-        document.getElementById('scoreBoard').style.display = 'none';
+        console.log('showMenu called');
         
-        // 色選択をリセット
-        this.resetColorSelection();
-        
-        // じゃんけん関連をリセット
-        this.firstPlayer = 'red';
-        this.jankenDecided = false;
-        document.getElementById('turnDecisionPvP').style.display = 'none';
-        document.getElementById('turnDecisionCpu').style.display = 'none';
-        
-        // 手入力フラグをリセット（メニューに戻った際は色に応じたデフォルト名に戻る）
-        this.isCustomName = { red: false, white: false };
-        
-        // 難易度選択をリセット
-        document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('selected'));
-        document.getElementById('difficultySelected').style.display = 'none';
-        
-        // 先攻選択をリセット（デフォルトはプレイヤー1）
-        document.querySelectorAll('.first-player-btn').forEach(btn => btn.classList.remove('selected'));
-        document.getElementById('player1FirstBtn').classList.add('selected');
-        
-        // 固定で2人モード
-        this.totalPlayers = 2;
-        this.humanPlayers = 2;
-        
-        // メッセージエリアを隠す
-        document.getElementById('messageArea').innerHTML = '';
+        try {
+            document.getElementById('gameModeSelector').style.display = 'block';
+            document.getElementById('gameBoard').style.display = 'none';
+            document.getElementById('gameControls').style.display = 'none';
+            document.getElementById('difficultySelector').style.display = 'none';
+            document.getElementById('humanPlayerSelector').style.display = 'none';
+            document.getElementById('scoreBoard').style.display = 'none';
+            
+            console.log('UI elements hidden/shown successfully');
+            
+            // 色選択をリセット
+            this.resetColorSelection();
+            
+            // じゃんけん関連をリセット
+            this.firstPlayer = 'red'; // デフォルト値を設定
+            this.jankenDecided = false;
+            document.getElementById('turnDecisionPvP').style.display = 'none';
+            document.getElementById('turnDecisionCpu').style.display = 'none';
+            
+            // 手入力フラグをリセット（メニューに戻った際は色に応じたデフォルト名に戻る）
+            this.isCustomName = { red: false, white: false };
+            
+            // 難易度選択をリセット
+            document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('difficultySelected').style.display = 'none';
+            
+            // 先攻選択をリセット（デフォルトはプレイヤー1）
+            document.querySelectorAll('.first-player-btn').forEach(btn => btn.classList.remove('selected'));
+            const player1FirstBtn = document.getElementById('player1FirstBtn');
+            if (player1FirstBtn) {
+                player1FirstBtn.classList.add('selected');
+            }
+            
+            // 固定で2人モード
+            this.totalPlayers = 2;
+            this.humanPlayers = 2;
+            
+            // メッセージエリアを隠す
+            document.getElementById('messageArea').innerHTML = '';
+            
+            console.log('showMenu completed successfully');
+            
+        } catch (error) {
+            console.error('Error in showMenu:', error);
+        }
     }
 
     startGame() {
@@ -858,8 +854,8 @@ class OthelloGame {
     handleCellClick(row, col) {
         if (this.gameOver || this.board[row][col] || this.isAiThinking) return;
         
-        // CPUモードで白のターンの場合はクリック無効
-        if (this.gameMode === 'cpu' && this.currentPlayer === 'white') return;
+        // CPUモードでプレイヤー2（CPU）のターンの場合はクリック無効
+        if (this.gameMode === 'cpu' && this.currentPlayer === this.selectedColors[1]) return;
         
         if (this.isValidMove(row, col, this.currentPlayer)) {
             this.makeMove(row, col, this.currentPlayer);
@@ -885,7 +881,8 @@ class OthelloGame {
                 this.endGame();
                 return;
             } else {
-                this.updateMessage(`${this.playerNames[this.currentPlayer]}はおけるところがないよ。もういちど${this.playerNames[this.currentPlayer === 'red' ? 'white' : 'red']}のばん！`);
+                const otherPlayer = this.currentPlayer === this.selectedColors[0] ? this.selectedColors[1] : this.selectedColors[0];
+                this.updateMessage(`${this.playerNames[this.currentPlayer]}はおけるところがないよ。もういちど${this.playerNames[otherPlayer]}のばん！`);
             }
         }
         
@@ -893,7 +890,7 @@ class OthelloGame {
         this.playSound('place');
         
         // CPUの手番処理
-        if (this.gameMode === 'cpu' && this.currentPlayer === 'white' && !this.gameOver) {
+        if (this.gameMode === 'cpu' && this.currentPlayer === this.selectedColors[1] && !this.gameOver) {
             this.makeAiMove();
         }
     }
@@ -905,7 +902,7 @@ class OthelloGame {
         setTimeout(() => {
             const move = this.getAiMove();
             if (move) {
-                this.makeMove(move.row, move.col, 'white');
+                this.makeMove(move.row, move.col, this.selectedColors[1]);
             }
             this.isAiThinking = false;
         }, 1000 + Math.random() * 1000); // 1-2秒のランダムな思考時間
@@ -956,7 +953,7 @@ class OthelloGame {
         let bestScore = -Infinity;
         
         for (const [row, col] of this.validMoves) {
-            const score = this.evaluateMove(row, col, 'white');
+            const score = this.evaluateMove(row, col, this.selectedColors[1]);
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = { row, col };
@@ -968,12 +965,12 @@ class OthelloGame {
     
     getHardMove() {
         // より深い評価
-        return this.minimax('white', 3, -Infinity, Infinity, true).move || this.getNormalMove();
+        return this.minimax(this.selectedColors[1], 3, -Infinity, Infinity, true).move || this.getNormalMove();
     }
     
     getExpertMove() {
         // 最も深い評価
-        return this.minimax('white', 5, -Infinity, Infinity, true).move || this.getHardMove();
+        return this.minimax(this.selectedColors[1], 5, -Infinity, Infinity, true).move || this.getHardMove();
     }
     
     evaluateMove(row, col, player) {
@@ -1034,7 +1031,7 @@ class OthelloGame {
         
         const moves = this.getValidMoves(player);
         if (moves.length === 0) {
-            const opponent = player === 'red' ? 'white' : 'red';
+            const opponent = player === this.selectedColors[0] ? this.selectedColors[1] : this.selectedColors[0];
             const opponentMoves = this.getValidMoves(opponent);
             if (opponentMoves.length === 0) {
                 return { score: this.evaluateBoard(player), move: null };
@@ -1049,7 +1046,7 @@ class OthelloGame {
             for (const [row, col] of moves) {
                 const boardCopy = this.copyBoard();
                 this.simulateMove(row, col, player);
-                const result = this.minimax(player === 'red' ? 'white' : 'red', depth - 1, alpha, beta, false);
+                const result = this.minimax(player === this.selectedColors[0] ? this.selectedColors[1] : this.selectedColors[0], depth - 1, alpha, beta, false);
                 this.board = boardCopy;
                 
                 if (result.score > maxScore) {
@@ -1066,7 +1063,7 @@ class OthelloGame {
             for (const [row, col] of moves) {
                 const boardCopy = this.copyBoard();
                 this.simulateMove(row, col, player);
-                const result = this.minimax(player === 'red' ? 'white' : 'red', depth - 1, alpha, beta, true);
+                const result = this.minimax(player === this.selectedColors[0] ? this.selectedColors[1] : this.selectedColors[0], depth - 1, alpha, beta, true);
                 this.board = boardCopy;
                 
                 if (result.score < minScore) {
@@ -1107,7 +1104,7 @@ class OthelloGame {
     
     evaluateBoard(player) {
         let score = 0;
-        const opponent = player === 'red' ? 'white' : 'red';
+        const opponent = player === this.selectedColors[0] ? this.selectedColors[1] : this.selectedColors[0];
         
         for (let row = 0; row < this.boardSize; row++) {
             for (let col = 0; col < this.boardSize; col++) {
@@ -1142,9 +1139,9 @@ class OthelloGame {
     }
     
     isGameOver() {
-        const redMoves = this.getValidMoves('red');
-        const whiteMoves = this.getValidMoves('white');
-        return redMoves.length === 0 && whiteMoves.length === 0;
+        const player1Moves = this.getValidMoves(this.selectedColors[0]);
+        const player2Moves = this.getValidMoves(this.selectedColors[1]);
+        return player1Moves.length === 0 && player2Moves.length === 0;
     }
     
     isValidMove(row, col, player) {
@@ -1166,7 +1163,14 @@ class OthelloGame {
     }
     
     checkDirection(row, col, dr, dc, player) {
-        const opponent = player === 'red' ? 'white' : 'red';
+        // Dynamic color support - get opponent based on selected colors
+        let opponent;
+        if (player === this.selectedColors[0]) {
+            opponent = this.selectedColors[1];
+        } else {
+            opponent = this.selectedColors[0];
+        }
+        
         const piecesToFlip = [];
         
         let r = row + dr;
@@ -1222,7 +1226,12 @@ class OthelloGame {
     }
     
     switchPlayer() {
-        this.currentPlayer = this.currentPlayer === 'red' ? 'white' : 'red';
+        // Dynamic color support - switch between selected colors
+        if (this.currentPlayer === this.selectedColors[0]) {
+            this.currentPlayer = this.selectedColors[1];
+        } else {
+            this.currentPlayer = this.selectedColors[0];
+        }
         this.updateTurnIndicator();
         this.updateMessage(`${this.playerNames[this.currentPlayer]}のばんです！`);
     }
@@ -1247,109 +1256,36 @@ class OthelloGame {
                 if (this.isValidMove(row, col, this.currentPlayer)) {
                     this.validMoves.push([row, col]);
                     const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                    cell.classList.add('valid-move-hint');
-                    if (this.currentPlayer === 'white') {
-                        cell.classList.add('white-turn');
+                    if (cell) {
+                        cell.classList.add('valid-move-hint');
+                        if (this.currentPlayer === this.selectedColors[1]) { // プレイヤー2の色の場合
+                            cell.classList.add('white-turn');
+                        }
                     }
                 }
             }
         }
         
-        // スキップボタンの表示制御
-        this.updateSkipButton();
+        console.log(`Found ${this.validMoves.length} valid moves for ${this.currentPlayer}:`, this.validMoves);
     }
     
-    updateSkipButton() {
-        const skipBtn = document.getElementById('skipBtn');
-        
-        // 有効な手がない場合のみスキップボタンを表示
-        if (this.validMoves.length === 0) {
-            skipBtn.style.display = 'inline-block';
-            
-            // 有効な手がない場合はボタンを強調
-            if (this.validMoves.length === 0) {
-                skipBtn.style.background = '#e74c3c';
-                skipBtn.textContent = 'パス（必須）';
-            } else {
-                skipBtn.style.background = '#ffa502';
-                skipBtn.textContent = 'パス';
-            }
-        } else {
-            skipBtn.style.display = 'none';
-        }
-        
-        // CPUのターンの場合はボタンを無効化
-        if (this.gameMode === 'cpu' && this.currentPlayer === 'white') {
-            skipBtn.disabled = true;
-        } else {
-            skipBtn.disabled = false;
-        }
-    }
     
-    skipTurn() {
-        // CPUのターンではスキップできない
-        if (this.gameMode === 'cpu' && this.currentPlayer === 'white') return;
-        
-        // 2人モードでのスキップ処理
-        this.handleTwoPlayerSkip();
-        
-        this.playSound('place');
-    }
     
-    handleTwoPlayerSkip() {
-        const currentPlayerName = this.playerNames[this.currentPlayer];
-        this.updateMessage(`${currentPlayerName}がパスしました`);
-        
-        // プレイヤーを切り替え
-        this.switchPlayer();
-        this.updateValidMoves();
-        
-        // 次のプレイヤーも有効な手がない場合はゲーム終了
-        if (this.validMoves.length === 0) {
-            this.endGame();
-            return;
-        }
-        
-        // 通常のターン続行
-        this.updateTurnIndicator();
-        this.updateMessage(`${this.playerNames[this.currentPlayer]}のばんです！`);
-        
-        // CPUの手番処理
-        if (this.gameMode === 'cpu' && this.currentPlayer === 'white') {
-            this.makeAiMove();
-        }
-    }
     
-    showHint() {
-        if (this.gameOver || this.validMoves.length === 0) return;
-        
-        this.validMoves.forEach(([row, col]) => {
-            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-            cell.classList.add('valid-move');
-        });
-        
-        setTimeout(() => {
-            document.querySelectorAll('.valid-move').forEach(cell => {
-                cell.classList.remove('valid-move');
-            });
-        }, 2000);
-        
-        this.playSound('hint');
-    }
     
     updateScore() {
-        let redCount = 0;
-        let whiteCount = 0;
+        let player1Count = 0;
+        let player2Count = 0;
         
         for (let row = 0; row < this.boardSize; row++) {
             for (let col = 0; col < this.boardSize; col++) {
-                if (this.board[row][col] === 'red') redCount++;
-                else if (this.board[row][col] === 'white') whiteCount++;
+                if (this.board[row][col] === this.selectedColors[0]) player1Count++;
+                else if (this.board[row][col] === this.selectedColors[1]) player2Count++;
             }
         }
         
-        document.getElementById('redScore').textContent = redCount;
-        document.getElementById('whiteScore').textContent = whiteCount;
+        document.getElementById('redScore').textContent = player1Count;
+        document.getElementById('whiteScore').textContent = player2Count;
     }
     
     updateMessage(message) {
@@ -1360,35 +1296,38 @@ class OthelloGame {
         this.gameOver = true;
         
         // ボードを直接カウントして最終スコアを計算
-        let redScore = 0;
-        let whiteScore = 0;
+        let player1Score = 0;
+        let player2Score = 0;
         
         for (let row = 0; row < this.boardSize; row++) {
             for (let col = 0; col < this.boardSize; col++) {
-                if (this.board[row][col] === 'red') {
-                    redScore++;
-                } else if (this.board[row][col] === 'white') {
-                    whiteScore++;
+                if (this.board[row][col] === this.selectedColors[0]) {
+                    player1Score++;
+                } else if (this.board[row][col] === this.selectedColors[1]) {
+                    player2Score++;
                 }
             }
         }
         
         // サイドバーのスコアも最終値に更新
-        document.getElementById('redScore').textContent = redScore;
-        document.getElementById('whiteScore').textContent = whiteScore;
+        document.getElementById('redScore').textContent = player1Score;
+        document.getElementById('whiteScore').textContent = player2Score;
+        
+        const player1Name = this.playerNames[this.selectedColors[0]];
+        const player2Name = this.playerNames[this.selectedColors[1]];
         
         let winMessage = '';
         let finalScoreMessage = '';
         
-        if (redScore > whiteScore) {
-            winMessage = `${this.playerNames.red}のかち！`;
-            finalScoreMessage = `${this.playerNames.red} ${redScore} - ${this.playerNames.white} ${whiteScore}`;
-        } else if (whiteScore > redScore) {
-            winMessage = `${this.playerNames.white}のかち！`;
-            finalScoreMessage = `${this.playerNames.white} ${whiteScore} - ${this.playerNames.red} ${redScore}`;
+        if (player1Score > player2Score) {
+            winMessage = `${player1Name}のかち！`;
+            finalScoreMessage = `${player1Name} ${player1Score} - ${player2Name} ${player2Score}`;
+        } else if (player2Score > player1Score) {
+            winMessage = `${player2Name}のかち！`;
+            finalScoreMessage = `${player2Name} ${player2Score} - ${player1Name} ${player1Score}`;
         } else {
             winMessage = 'ひきわけ！';
-            finalScoreMessage = `${this.playerNames.red} ${redScore} - ${this.playerNames.white} ${whiteScore}`;
+            finalScoreMessage = `${player1Name} ${player1Score} - ${player2Name} ${player2Score}`;
         }
         
         document.getElementById('winMessage').textContent = winMessage;
@@ -1421,9 +1360,6 @@ class OthelloGame {
                 break;
             case 'invalid':
                 this.playTone(200, 100);
-                break;
-            case 'hint':
-                this.playTone(600, 50);
                 break;
             case 'win':
                 this.playTone(523, 100);
@@ -1528,32 +1464,6 @@ class OthelloGame {
         this.currentEditingPlayer = null;
     }
     
-    swapPlayerNames() {
-        if (this.gameMode === 'cpu') return; // CPUモードでは無効
-        
-        // 名前を交換
-        const tempName = this.playerNames.red;
-        this.playerNames.red = this.playerNames.white;
-        this.playerNames.white = tempName;
-        
-        // 表示を更新
-        document.getElementById('redName').textContent = this.playerNames.red;
-        document.getElementById('whiteName').textContent = this.playerNames.white;
-        
-        // 現在のターン表示も更新
-        this.updateTurnIndicator();
-        
-        // 効果音を再生
-        this.playSound('place');
-        
-        // メッセージを更新
-        this.updateMessage(`名前をこうかんしました！${this.playerNames[this.currentPlayer]}のばんです！`);
-        
-        // 少し後に通常のメッセージに戻す
-        setTimeout(() => {
-            this.updateMessage(`${this.playerNames[this.currentPlayer]}のばんです！`);
-        }, 2000);
-    }
     
     selectColors(color1, color2) {
         this.selectedColors = [color1, color2];
