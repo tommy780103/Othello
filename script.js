@@ -10,13 +10,16 @@ class OthelloGame {
             white: 'しろ'
         };
         this.gameMode = null; // 'pvp' or 'cpu'
-        this.playerCount = 2; // 2, 3, or 4
+        this.totalPlayers = 2; // 全体の人数 2, 3, or 4
+        this.humanPlayers = 2; // 人間のプレイヤー数 1-totalPlayers
         this.difficulty = null; // 1-5
+        this.playerSetup = null; // プレイヤー構成 ['human', 'cpu', 'cpu', 'cpu'] など
         this.isAiThinking = false;
         this.currentEditingPlayer = null; // 'red' or 'white'
-        this.selectedColors = ['red', 'white']; // デフォルト色
-        this.colorSelectionStep = 1; // 1: プレイヤー1選択中, 2: プレイヤー2選択中, 0: 完了
-        this.allColors = ['red', 'white', 'black', 'blue', 'orange', 'pink', 'green', 'yellow', 'gray', 'gold', 'silver', 'lime', 'purple', 'cyan', 'brown', 'wood1', 'wood2', 'wood3', 'marble', 'stone'];
+        this.selectedColors = ['red', 'white']; // デフォルト色（2-4人対応）
+        this.colorSelectionStep = 1; // 1: プレイヤー1選択中, 2: プレイヤー2選択中, 3: プレイヤー3選択中, 4: プレイヤー4選択中, 0: 完了
+        this.currentPlayerIndex = 0; // 現在色を選択中のプレイヤーインデックス
+        this.allColors = ['red', 'white', 'black', 'blue', 'orange', 'pink', 'green', 'yellow', 'gray', 'gold', 'silver', 'lime', 'purple', 'cyan', 'brown'];
         this.firstPlayer = 'red'; // じゃんけんで決まる先攻プレイヤー
         this.jankenDecided = false; // じゃんけんで先攻が決まったかどうか
         this.isCustomName = { red: false, white: false }; // 手入力で名前が変更されたかどうか
@@ -24,8 +27,7 @@ class OthelloGame {
             red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
             orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
             gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
-            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ',
-            wood1: 'きめ1', wood2: 'きめ2', wood3: 'きめ3', marble: 'だいり', stone: 'いし'
+            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
         };
         
         this.loadSettings();
@@ -34,6 +36,7 @@ class OthelloGame {
         this.showMenu();
         
         // 色選択イベントはshowMenuで初期化される
+        this.setupColorSelectionNameEditListeners();
     }
     
     init() {
@@ -55,46 +58,46 @@ class OthelloGame {
     }
     
     setupMenuEventListeners() {
-        // プレイヤー数選択ボタン
-        document.querySelectorAll('.player-count-btn').forEach(btn => {
+        // 全体人数選択ボタン
+        document.querySelectorAll('.total-player-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 // 以前の選択を解除
-                document.querySelectorAll('.player-count-btn').forEach(b => b.classList.remove('selected'));
+                document.querySelectorAll('.total-player-btn').forEach(b => b.classList.remove('selected'));
                 
                 // 現在の選択を強調
                 e.currentTarget.classList.add('selected');
                 
-                this.playerCount = parseInt(e.currentTarget.dataset.count);
-                this.updateModeButtonText();
+                this.totalPlayers = parseInt(e.currentTarget.dataset.total);
                 
-                // 3人以上の場合はCPUモードを無効化
-                const cpuBtn = document.querySelector('[data-mode="cpu"]');
-                if (this.playerCount > 2) {
-                    cpuBtn.style.opacity = '0.3';
-                    cpuBtn.style.pointerEvents = 'none';
-                    cpuBtn.title = '3人以上はPvPのみです';
-                } else {
-                    cpuBtn.style.opacity = '1';
-                    cpuBtn.style.pointerEvents = 'auto';
-                    cpuBtn.title = '';
-                }
+                // プレイヤー数選択を表示
+                this.showHumanPlayerSelector();
             });
         });
 
-        // モード選択ボタン
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const mode = e.currentTarget.dataset.mode;
-                if (mode === 'pvp') {
-                    this.gameMode = 'pvp';
-                    // PvPモードでは色選択に進む
-                    this.resetColorSelection();
-                } else if (mode === 'cpu') {
-                    this.gameMode = 'cpu';
-                    document.getElementById('difficultySelector').style.display = 'block';
-                }
-            });
+        // 人間プレイヤー数選択ボタン（動的に生成されるため、イベント委譲使用）
+        document.getElementById('humanPlayerButtons').addEventListener('click', (e) => {
+            if (e.target.classList.contains('human-player-btn')) {
+                // 以前の選択を解除
+                document.querySelectorAll('.human-player-btn').forEach(b => b.classList.remove('selected'));
+                
+                // 現在の選択を強調
+                e.target.classList.add('selected');
+                
+                this.humanPlayers = parseInt(e.target.dataset.human);
+                this.generatePlayerSetup();
+                this.showPlayerBreakdown();
+                
+                // CPUがいる場合は難易度選択、そうでなければ色選択に進む
+                setTimeout(() => {
+                    if (this.gameMode === 'cpu') {
+                        document.getElementById('difficultySelector').style.display = 'block';
+                    } else {
+                        this.resetColorSelection();
+                    }
+                }, 1000);
+            }
         });
+
 
         // 難易度選択ボタン
         document.querySelectorAll('.diff-btn').forEach(btn => {
@@ -133,130 +136,295 @@ class OthelloGame {
         });
     }
     
+    showHumanPlayerSelector() {
+        const humanSelector = document.getElementById('humanPlayerSelector');
+        const humanButtons = document.getElementById('humanPlayerButtons');
+        
+        humanButtons.innerHTML = '';
+        humanSelector.style.display = 'block';
+        
+        // 1人から全体人数までの人間プレイヤー数ボタンを生成
+        for (let i = 1; i <= this.totalPlayers; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'human-player-btn';
+            btn.dataset.human = i;
+            
+            if (i === this.totalPlayers) {
+                btn.classList.add('selected');
+                this.humanPlayers = this.totalPlayers;
+            }
+            
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'count-number';
+            numberSpan.textContent = i;
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = 'count-text';
+            textSpan.textContent = 'にん';
+            
+            btn.appendChild(numberSpan);
+            btn.appendChild(textSpan);
+            humanButtons.appendChild(btn);
+        }
+    }
+    
+    generatePlayerSetup() {
+        // 人間プレイヤー数に基づいて自動的にプレイヤー構成を生成
+        this.playerSetup = [];
+        
+        for (let i = 0; i < this.totalPlayers; i++) {
+            if (i < this.humanPlayers) {
+                this.playerSetup.push('human');
+            } else {
+                this.playerSetup.push('cpu');
+            }
+        }
+        
+        // 全員人間の場合はPvPモード、そうでなければCPUモード
+        this.gameMode = this.humanPlayers === this.totalPlayers ? 'pvp' : 'cpu';
+    }
+    
+    showPlayerBreakdown() {
+        const breakdown = document.getElementById('playerBreakdown');
+        const breakdownText = document.getElementById('breakdownText');
+        
+        const cpuCount = this.totalPlayers - this.humanPlayers;
+        
+        if (cpuCount === 0) {
+            breakdownText.textContent = `プレイヤー${this.humanPlayers}人でたたかいます`;
+        } else {
+            breakdownText.textContent = `プレイヤー${this.humanPlayers}人 + コンピューター${cpuCount}人でたたかいます`;
+        }
+        
+        breakdown.style.display = 'block';
+    }
+    
     setupColorEventListeners() {
-        // Step1の色選択（全色から選択）
+        // 通常の色選択（ランダムを含む）
         document.querySelectorAll('#step1 .color-option').forEach(option => {
             option.addEventListener('click', (e) => {
                 const color = e.currentTarget.dataset.color;
-                this.selectedColors[0] = color;
-                // プレイヤー1の色が選択された時点で名前を更新
-                if (!this.isCustomName.red) {
-                    this.playerNames.red = this.colorDefaultNames[color];
-                    document.getElementById('redName').textContent = this.playerNames.red;
+                if (color === 'random') {
+                    const randomColor = this.selectRandomColor();
+                    if (randomColor) {
+                        this.selectColorForCurrentPlayer(randomColor);
+                    }
+                } else {
+                    this.selectColorForCurrentPlayer(color);
                 }
-                this.showStep2(color);
             });
         });
     }
     
-    showStep2(selectedColor) {
-        // Step1を隠してStep2を表示
-        document.getElementById('step1').style.display = 'none';
-        document.getElementById('step2').style.display = 'block';
+    setupColorSelectionNameEditListeners() {
+        // 色選択後の名前編集ボタン
+        document.getElementById('player1NameEditBtn').addEventListener('click', () => {
+            this.showNameModal('red');
+        });
         
-        // プレイヤー1の選択した色を表示
-        const colorNames = {
-            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
-            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
-            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
-            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
-        };
-        
-        document.getElementById('player1Preview').className = `preview-piece color-${selectedColor}`;
-        document.getElementById('player1ColorName').textContent = colorNames[selectedColor];
-        
-        // 残りの色を表示
-        this.showRemainingColors(selectedColor);
+        document.getElementById('player2NameEditBtn').addEventListener('click', () => {
+            if (this.gameMode !== 'cpu') { // CPUモードでは白の名前変更不可
+                this.showNameModal('white');
+            }
+        });
     }
     
-    showRemainingColors(excludeColor) {
-        const remainingContainer = document.getElementById('remainingColors');
-        remainingContainer.innerHTML = '';
+    selectColorForCurrentPlayer(color) {
+        // 現在のプレイヤーに色を設定
+        this.selectedColors[this.currentPlayerIndex] = color;
         
-        const colorNames = {
-            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
-            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
-            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
-            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
-        };
+        // プレイヤー名を更新（2人モードの場合のみ）
+        if (this.selectedColors.length === 2) {
+            if (this.currentPlayerIndex === 0 && !this.isCustomName.red) {
+                this.playerNames.red = this.colorDefaultNames[color];
+                document.getElementById('redName').textContent = this.playerNames.red;
+            } else if (this.currentPlayerIndex === 1 && !this.isCustomName.white) {
+                this.playerNames.white = this.colorDefaultNames[color];
+                document.getElementById('whiteName').textContent = this.playerNames.white;
+            }
+        }
         
-        this.allColors
-            .filter(color => color !== excludeColor)
-            .forEach(color => {
-                const option = document.createElement('div');
-                option.className = 'color-option';
-                option.dataset.color = color;
-                
-                const piece = document.createElement('span');
-                piece.className = `preview-piece color-${color}`;
-                
-                const name = document.createElement('span');
-                name.className = 'color-name';
-                name.textContent = colorNames[color];
-                
-                option.appendChild(piece);
-                option.appendChild(name);
-                
-                option.addEventListener('click', () => {
-                    this.selectedColors[1] = color;
-                    // プレイヤー2の色が選択された時点で名前を更新
-                    if (!this.isCustomName.white && this.gameMode !== 'cpu') {
-                        this.playerNames.white = this.colorDefaultNames[color];
-                        document.getElementById('whiteName').textContent = this.playerNames.white;
-                    }
-                    this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
-                    this.saveSettings();
-                    this.colorSelectionStep = 0;
-                    this.showStep3();
-                });
-                
-                remainingContainer.appendChild(option);
-            });
+        // 次のプレイヤーに進む
+        this.currentPlayerIndex++;
+        const playerCount = this.selectedColors.length;
+        
+        if (this.currentPlayerIndex < playerCount) {
+            // まだ選択していないプレイヤーがいる
+            this.updateAvailableColors();
+            this.updateColorStepTitle();
+        } else {
+            // 全プレイヤーの色選択完了
+            this.currentPlayerIndex = 0;
+            this.showStep3();
+        }
     }
+    
+    updateAvailableColors() {
+        const availableColors = this.getAvailableColors();
+        
+        // 利用可能な色のみ表示
+        document.querySelectorAll('#step1 .color-option').forEach(option => {
+            const color = option.dataset.color;
+            if (availableColors.includes(color)) {
+                option.style.display = 'flex';
+                option.classList.remove('disabled');
+            } else {
+                option.style.display = 'none';
+                option.classList.add('disabled');
+            }
+        });
+    }
+    
     
     showStep3() {
-        // Step2を隠してStep3を表示
+        // Step1を隠してStep3を表示
+        document.getElementById('step1').style.display = 'none';
         document.getElementById('step2').style.display = 'none';
         document.getElementById('step3').style.display = 'block';
         
-        // 色名のマップ
-        const colorNames = {
-            red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
-            orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
-            gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
-            purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
-        };
+        // 全プレイヤーの色選択結果を表示
+        this.updateStep3Preview();
         
-        // 最終プレビューの要素を更新
-        document.getElementById('finalPlayer1Preview').className = `preview-piece color-${this.selectedColors[0]}`;
-        document.getElementById('finalPlayer1ColorName').textContent = colorNames[this.selectedColors[0]];
-        
-        document.getElementById('finalPlayer2Preview').className = `preview-piece color-${this.selectedColors[1]}`;
-        document.getElementById('finalPlayer2ColorName').textContent = colorNames[this.selectedColors[1]];
-        
-        // モードに応じて先攻選択UIを表示
-        if (this.gameMode === 'pvp') {
-            document.getElementById('turnDecisionPvP').style.display = 'block';
-            document.getElementById('turnDecisionCpu').style.display = 'none';
-            this.setupFirstPlayerSelector();
-        } else if (this.gameMode === 'cpu') {
-            document.getElementById('turnDecisionPvP').style.display = 'none';
-            document.getElementById('turnDecisionCpu').style.display = 'block';
-            this.setupJankenEventListeners();
+        // 2人モードの場合のみ色テーマを適用
+        if (this.selectedColors.length === 2) {
+            this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
+            this.saveSettings();
+            
+            // モードに応じて先攻選択UIを表示
+            if (this.gameMode === 'pvp') {
+                document.getElementById('turnDecisionPvP').style.display = 'block';
+                document.getElementById('turnDecisionCpu').style.display = 'none';
+                this.setupFirstPlayerSelector();
+            } else if (this.gameMode === 'cpu') {
+                document.getElementById('turnDecisionPvP').style.display = 'none';
+                document.getElementById('turnDecisionCpu').style.display = 'block';
+                this.setupJankenEventListeners();
+            } else {
+                document.getElementById('turnDecisionPvP').style.display = 'none';
+                document.getElementById('turnDecisionCpu').style.display = 'none';
+            }
         } else {
+            // 3-4人モードの場合は先攻選択なしで直接ゲーム開始可能
             document.getElementById('turnDecisionPvP').style.display = 'none';
             document.getElementById('turnDecisionCpu').style.display = 'none';
         }
     }
     
+    updateStep3Preview() {
+        // 2人モードの場合は固定レイアウトの色とプレイヤー名を更新
+        if (this.selectedColors.length === 2) {
+            const colorNames = {
+                red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
+                orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
+                gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
+                purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
+            };
+            
+            // プレイヤー1の色とプレイヤー名を更新
+            document.getElementById('finalPlayer1Preview').className = `preview-piece color-${this.selectedColors[0]}`;
+            document.getElementById('finalPlayer1ColorName').textContent = this.playerNames.red;
+            
+            // プレイヤー2の色とプレイヤー名を更新
+            document.getElementById('finalPlayer2Preview').className = `preview-piece color-${this.selectedColors[1]}`;
+            document.getElementById('finalPlayer2ColorName').textContent = this.playerNames.white;
+            
+            // CPUモードの場合は名前編集ボタンを無効化
+            if (this.gameMode === 'cpu') {
+                document.getElementById('player2NameEditBtn').style.opacity = '0.3';
+                document.getElementById('player2NameEditBtn').style.pointerEvents = 'none';
+            } else {
+                document.getElementById('player2NameEditBtn').style.opacity = '0.7';
+                document.getElementById('player2NameEditBtn').style.pointerEvents = 'auto';
+            }
+        } else {
+            // 3-4人モードは既存の動的生成を使用
+            const finalColorDisplay = document.querySelector('.final-color-display');
+            finalColorDisplay.innerHTML = '';
+            
+            const colorNames = {
+                red: 'あか', white: 'しろ', black: 'くろ', blue: 'あお',
+                orange: 'オレンジ', pink: 'ピンク', green: 'みどり', yellow: 'きいろ',
+                gray: 'グレー', gold: 'きん', silver: 'ぎん', lime: 'きみどり',
+                purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
+            };
+            
+            // 各プレイヤーの色プレビューを生成
+            this.selectedColors.forEach((color, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-final-color';
+                
+                const playerLabel = document.createElement('span');
+                playerLabel.textContent = `プレイヤー${index + 1}`;
+                
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'final-preview';
+                
+                const previewPiece = document.createElement('span');
+                previewPiece.className = `preview-piece color-${color}`;
+                
+                const colorName = document.createElement('span');
+                colorName.textContent = colorNames[color];
+                
+                previewDiv.appendChild(previewPiece);
+                previewDiv.appendChild(colorName);
+                
+                playerDiv.appendChild(playerLabel);
+                playerDiv.appendChild(previewDiv);
+                
+                finalColorDisplay.appendChild(playerDiv);
+                
+                // プレイヤー間にVSを追加（最後以外）
+                if (index < this.selectedColors.length - 1) {
+                    const vsDiv = document.createElement('div');
+                    vsDiv.className = 'vs-final';
+                    vsDiv.textContent = 'VS';
+                    finalColorDisplay.appendChild(vsDiv);
+                }
+            });
+        }
+    }
+    
     resetColorSelection() {
         this.colorSelectionStep = 1;
+        this.currentPlayerIndex = 0;
+        
+        // プレイヤー数に応じて初期色配列を設定
+        const playerCount = this.totalPlayers;
+        this.selectedColors = new Array(playerCount).fill(null);
+        
         document.getElementById('step1').style.display = 'block';
         document.getElementById('step2').style.display = 'none';
         document.getElementById('step3').style.display = 'none';
         
+        // ステップタイトルを更新
+        this.updateColorStepTitle();
+        
         // 色選択イベントリスナーを再設定
         this.setupColorEventListeners();
+    }
+    
+    updateColorStepTitle() {
+        const playerCount = this.totalPlayers;
+        const playerNumbers = ['1', '2', '3', '4'];
+        const currentPlayerNumber = playerNumbers[this.currentPlayerIndex];
+        
+        const title = document.getElementById('colorStepTitle');
+        if (this.currentPlayerIndex < playerCount) {
+            title.textContent = `プレイヤー${currentPlayerNumber}の色をえらんでね`;
+        }
+    }
+    
+    getAvailableColors() {
+        // 既に選択された色を除外
+        return this.allColors.filter(color => !this.selectedColors.includes(color));
+    }
+    
+    selectRandomColor() {
+        const availableColors = this.getAvailableColors();
+        if (availableColors.length === 0) return null;
+        
+        const randomIndex = Math.floor(Math.random() * availableColors.length);
+        return availableColors[randomIndex];
     }
     
     setupJankenEventListeners() {
@@ -364,16 +532,6 @@ class OthelloGame {
         // デフォルトはプレイヤー1（red）を先攻に設定
         this.firstPlayer = 'red';
     }
-    
-    updateModeButtonText() {
-        const pvpModeText = document.getElementById('pvpModeText');
-        const playerCountText = {
-            2: 'ふたりであそぶ',
-            3: 'さんにんであそぶ',
-            4: 'よにんであそぶ'
-        };
-        pvpModeText.textContent = playerCountText[this.playerCount] || 'みんなであそぶ';
-    }
 
     setupGameEventListeners() {
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
@@ -423,6 +581,8 @@ class OthelloGame {
         document.getElementById('gameBoard').style.display = 'none';
         document.getElementById('gameControls').style.display = 'none';
         document.getElementById('difficultySelector').style.display = 'none';
+        document.getElementById('humanPlayerSelector').style.display = 'none';
+        document.getElementById('scoreBoard').style.display = 'none';
         
         // 色選択をリセット
         this.resetColorSelection();
@@ -445,16 +605,13 @@ class OthelloGame {
         document.getElementById('player1FirstBtn').classList.add('selected');
         
         // プレイヤー数選択をリセット（デフォルトは2人）
-        document.querySelectorAll('.player-count-btn').forEach(btn => btn.classList.remove('selected'));
-        document.querySelector('[data-count="2"]').classList.add('selected');
-        this.playerCount = 2;
-        this.updateModeButtonText();
+        document.querySelectorAll('.total-player-btn').forEach(btn => btn.classList.remove('selected'));
+        document.querySelector('[data-total="2"]').classList.add('selected');
+        this.totalPlayers = 2;
+        this.humanPlayers = 2;
         
-        // CPUボタンを有効化
-        const cpuBtn = document.querySelector('[data-mode="cpu"]');
-        cpuBtn.style.opacity = '1';
-        cpuBtn.style.pointerEvents = 'auto';
-        cpuBtn.title = '';
+        // プレイヤー構成をリセット
+        this.playerSetup = null;
         
         // メッセージエリアを隠す
         document.getElementById('messageArea').innerHTML = '';
@@ -464,6 +621,7 @@ class OthelloGame {
         document.getElementById('gameModeSelector').style.display = 'none';
         document.getElementById('gameBoard').style.display = 'grid';
         document.getElementById('gameControls').style.display = 'flex';
+        document.getElementById('scoreBoard').style.display = 'block';
         
         // プレイヤー名を設定
         if (this.gameMode === 'cpu') {
@@ -1084,6 +1242,13 @@ class OthelloGame {
             
             this.playerNames[this.currentEditingPlayer] = newName;
             document.getElementById(`${this.currentEditingPlayer}Name`).textContent = newName;
+            
+            // step3の色選択画面での名前表示も更新
+            if (this.currentEditingPlayer === 'red') {
+                document.getElementById('finalPlayer1ColorName').textContent = newName;
+            } else if (this.currentEditingPlayer === 'white') {
+                document.getElementById('finalPlayer2ColorName').textContent = newName;
+            }
             
             // ターン表示も更新
             if (this.currentPlayer === this.currentEditingPlayer) {

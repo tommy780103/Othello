@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>イロオセロ</h1>
-            <div class="score-board">
+            <div class="score-board" id="scoreBoard" style="display: none;">
                 <div class="score red-score">
                     <div class="player-info">
                         <span class="score-label" id="redName">あか</span>
@@ -37,36 +37,38 @@
             <div class="game-mode-selector" id="gameModeSelector">
                 <h2>あそびかたをえらんでね</h2>
                 
-                <!-- プレイヤー数選択 -->
+                <!-- 全体人数選択 -->
                 <div class="player-count-selector">
-                    <h3>なんにんであそぶ？</h3>
+                    <h3>なんにん？</h3>
                     <div class="player-count-buttons">
-                        <button class="player-count-btn selected" data-count="2">
+                        <button class="total-player-btn selected" data-total="2">
                             <span class="count-number">2</span>
                             <span class="count-text">にん</span>
                         </button>
-                        <button class="player-count-btn" data-count="3">
+                        <button class="total-player-btn" data-total="3">
                             <span class="count-number">3</span>
                             <span class="count-text">にん</span>
                         </button>
-                        <button class="player-count-btn" data-count="4">
+                        <button class="total-player-btn" data-total="4">
                             <span class="count-number">4</span>
                             <span class="count-text">にん</span>
                         </button>
                     </div>
                 </div>
                 
-                <!-- モード選択（プレイヤー数によって変化） -->
-                <div class="mode-buttons" id="modeButtons">
-                    <button class="mode-btn" data-mode="pvp">
-                        <span class="mode-icon">👥</span>
-                        <span class="mode-text" id="pvpModeText">ふたりであそぶ</span>
-                    </button>
-                    <button class="mode-btn" data-mode="cpu">
-                        <span class="mode-icon">🤖</span>
-                        <span class="mode-text">コンピューターとあそぶ</span>
-                    </button>
+                <!-- プレイヤー数選択 -->
+                <div class="human-player-selector" id="humanPlayerSelector" style="display: none;">
+                    <h3>プレイヤー数は？</h3>
+                    <div class="human-player-buttons" id="humanPlayerButtons">
+                        <!-- JavaScriptで動的生成 -->
+                    </div>
+                    <div class="player-breakdown" id="playerBreakdown" style="display: none;">
+                        <p id="breakdownText"></p>
+                    </div>
                 </div>
+                
+                
+                <!-- CPU難易度選択（2人モード用） -->
                 <div class="difficulty-selector" id="difficultySelector" style="display: none;">
                     <h3>つよさをえらんでね</h3>
                     <div class="difficulty-buttons">
@@ -84,7 +86,7 @@
                 <div class="color-selector">
                     <div class="sequential-color-selection">
                         <div class="color-selection-step" id="step1">
-                            <h3>プレイヤー1の色をえらんでね</h3>
+                            <h3 id="colorStepTitle">プレイヤー1の色をえらんでね</h3>
                             <div class="all-color-options">
                                 <div class="color-option" data-color="red">
                                     <span class="preview-piece color-red"></span>
@@ -146,25 +148,9 @@
                                     <span class="preview-piece color-brown"></span>
                                     <span class="color-name">ちゃいろ</span>
                                 </div>
-                                <div class="color-option" data-color="wood1">
-                                    <span class="preview-piece color-wood1"></span>
-                                    <span class="color-name">きめ1</span>
-                                </div>
-                                <div class="color-option" data-color="wood2">
-                                    <span class="preview-piece color-wood2"></span>
-                                    <span class="color-name">きめ2</span>
-                                </div>
-                                <div class="color-option" data-color="wood3">
-                                    <span class="preview-piece color-wood3"></span>
-                                    <span class="color-name">きめ3</span>
-                                </div>
-                                <div class="color-option" data-color="marble">
-                                    <span class="preview-piece color-marble"></span>
-                                    <span class="color-name">だいり</span>
-                                </div>
-                                <div class="color-option" data-color="stone">
-                                    <span class="preview-piece color-stone"></span>
-                                    <span class="color-name">いし</span>
+                                <div class="color-option" data-color="random">
+                                    <span class="preview-piece color-random"></span>
+                                    <span class="color-name">ランダム</span>
                                 </div>
                             </div>
                         </div>
@@ -192,6 +178,7 @@
                                         <span class="preview-piece" id="finalPlayer1Preview"></span>
                                         <span id="finalPlayer1ColorName"></span>
                                     </div>
+                                    <button class="name-edit-btn" id="player1NameEditBtn" title="名前をかえる">✏️</button>
                                 </div>
                                 <div class="vs-final">VS</div>
                                 <div class="player-final-color">
@@ -200,6 +187,7 @@
                                         <span class="preview-piece" id="finalPlayer2Preview"></span>
                                         <span id="finalPlayer2ColorName"></span>
                                     </div>
+                                    <button class="name-edit-btn" id="player2NameEditBtn" title="名前をかえる">✏️</button>
                                 </div>
                             </div>
                             <div class="turn-decision" id="turnDecisionPvP" style="display: none;">
