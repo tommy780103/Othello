@@ -865,7 +865,8 @@ class OthelloGame {
                 
                 if (this.board[row][col]) {
                     const piece = document.createElement('div');
-                    piece.className = `piece ${this.board[row][col]}`;
+                    const roleClass = this.getRoleClassForColor(this.board[row][col]);
+                    piece.className = `piece ${roleClass}`;
                     cell.appendChild(piece);
                 }
                 
@@ -1222,7 +1223,8 @@ class OthelloGame {
         
         const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
         const piece = document.createElement('div');
-        piece.className = `piece ${player}`;
+        const roleClass = this.getRoleClassForColor(player);
+        piece.className = `piece ${roleClass}`;
         cell.appendChild(piece);
     }
     
@@ -1241,10 +1243,10 @@ class OthelloGame {
                 
                 const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
                 const piece = cell.querySelector('.piece');
-                
+                const roleClass = this.getRoleClassForColor(player);
                 piece.classList.add('flip');
                 setTimeout(() => {
-                    piece.className = `piece ${player}`;
+                    piece.className = `piece ${roleClass}`;
                 }, 300);
             }
         }
@@ -1264,7 +1266,15 @@ class OthelloGame {
     updateTurnIndicator() {
         const turnIndicator = document.getElementById('turnIndicatorText');
         turnIndicator.textContent = this.playerNames[this.currentPlayer];
-        turnIndicator.className = `turn-indicator ${this.currentPlayer}`;
+        const roleClass = (this.currentPlayer === this.selectedColors[0]) ? 'red' : 'white';
+        turnIndicator.className = `turn-indicator ${roleClass}`;
+    }
+
+    getRoleClassForColor(color) {
+        // 選択された色がプレイヤー1側なら 'red'、プレイヤー2側なら 'white' を返す
+        // CSSは .piece.red / .piece.white にバインドされるため
+        if (!this.selectedColors || this.selectedColors.length < 2) return 'red';
+        return (color === this.selectedColors[0]) ? 'red' : 'white';
     }
     
     updateValidMoves() {
