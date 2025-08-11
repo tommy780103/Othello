@@ -703,12 +703,32 @@ class OthelloGame {
     }
 
     setupGameEventListeners() {
-        document.getElementById('resetBtn').addEventListener('click', () => this.reset());
-        document.getElementById('playAgainBtn').addEventListener('click', () => this.reset());
-        document.getElementById('menuBtn').addEventListener('click', () => {
-            console.log('Menu button clicked');
-            this.showMenu();
-        });
+        // 既存のイベントリスナーを削除してから新しく追加
+        const resetBtn = document.getElementById('resetBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        
+        // 既存のイベントリスナーを削除（クローンして置換）
+        if (resetBtn) {
+            const newResetBtn = resetBtn.cloneNode(true);
+            resetBtn.parentNode.replaceChild(newResetBtn, resetBtn);
+            newResetBtn.addEventListener('click', () => this.reset());
+        }
+        
+        if (playAgainBtn) {
+            const newPlayAgainBtn = playAgainBtn.cloneNode(true);
+            playAgainBtn.parentNode.replaceChild(newPlayAgainBtn, playAgainBtn);
+            newPlayAgainBtn.addEventListener('click', () => this.reset());
+        }
+        
+        if (menuBtn) {
+            const newMenuBtn = menuBtn.cloneNode(true);
+            menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
+            newMenuBtn.addEventListener('click', () => {
+                console.log('Menu button clicked');
+                this.showMenu();
+            });
+        }
     }
     
     
@@ -792,6 +812,11 @@ class OthelloGame {
         document.getElementById('gameBoard').style.display = 'grid';
         document.getElementById('gameControls').style.display = 'flex';
         document.getElementById('scoreBoard').style.display = 'block';
+        
+        // 選択された色のテーマを適用
+        if (this.selectedColors[0] && this.selectedColors[1]) {
+            this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
+        }
         
         // 2人モード用の初期化
         this.init();
@@ -1344,6 +1369,11 @@ class OthelloGame {
         this.gameOver = false;
         this.isAiThinking = false;
         this.currentPlayer = this.firstPlayer;
+        
+        // 選択された色のテーマを再適用
+        if (this.selectedColors[0] && this.selectedColors[1]) {
+            this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
+        }
         
         // 2人モード用の初期化
         this.init();
