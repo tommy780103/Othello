@@ -29,6 +29,11 @@ class OthelloGame {
             purple: 'むらさき', cyan: 'みずいろ', brown: 'ちゃいろ'
         };
         
+        // 盤面履歴を保存する配列
+        this.boardHistory = [];
+        this.playerHistory = [];
+        this.validMovesHistory = [];
+        
         this.loadSettings();
         this.setupMenuEventListeners();
         this.setupNameModalEventListeners();
@@ -707,8 +712,15 @@ class OthelloGame {
         const resetBtn = document.getElementById('resetBtn');
         const playAgainBtn = document.getElementById('playAgainBtn');
         const menuBtn = document.getElementById('menuBtn');
+        const undoBtn = document.getElementById('undoBtn');
         
         // 既存のイベントリスナーを削除（クローンして置換）
+        if (undoBtn) {
+            const newUndoBtn = undoBtn.cloneNode(true);
+            undoBtn.parentNode.replaceChild(newUndoBtn, undoBtn);
+            newUndoBtn.addEventListener('click', () => this.undoMove());
+        }
+        
         if (resetBtn) {
             const newResetBtn = resetBtn.cloneNode(true);
             resetBtn.parentNode.replaceChild(newResetBtn, resetBtn);
@@ -893,6 +905,9 @@ class OthelloGame {
     
     
     makeMove(row, col, player) {
+        // 現在の状態を履歴に保存
+        this.saveBoardState();
+        
         this.placePiece(row, col, player);
         this.flipPieces(row, col, player);
         
@@ -960,21 +975,45 @@ class OthelloGame {
     }
     
     getEasyMove() {
-        // 角を優先、それ以外はランダム
+        // 初級レベル：基本的な評価と50%ランダム
+        // 角が取れる場合は30%の確率で取る
         const corners = this.validMoves.filter(([row, col]) => {
             return (row === 0 || row === 7) && (col === 0 || col === 7);
         });
         
-        if (corners.length > 0) {
+        if (corners.length > 0 && Math.random() < 0.3) {
             const [row, col] = corners[Math.floor(Math.random() * corners.length)];
             return { row, col };
         }
         
-        return this.getRandomMove();
+        // 50%の確率でランダム
+        if (Math.random() < 0.5) {
+            return this.getRandomMove();
+        }
+        
+        // 簡単な評価で手を選ぶ
+        let bestMove = null;
+        let bestScore = -Infinity;
+        
+        for (const [row, col] of this.validMoves) {
+            const score = this.getFlippedPieces(row, col, this.selectedColors[1]).length;
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = { row, col };
+            }
+        }
+        
+        return bestMove || this.getRandomMove();
     }
     
     getNormalMove() {
-        // より良い手を選ぶ簡単な評価
+        // 中級レベル：浅いminimaxと戦略的評価
+        const result = this.minimax(this.selectedColors[1], 2, -Infinity, Infinity, true);
+        if (result.move) {
+            return { row: result.move.row, col: result.move.col };
+        }
+        
+        // フォールバック：基本的な評価
         let bestMove = null;
         let bestScore = -Infinity;
         
@@ -990,13 +1029,20 @@ class OthelloGame {
     }
     
     getHardMove() {
-        // より深い評価
-        return this.minimax(this.selectedColors[1], 3, -Infinity, Infinity, true).move || this.getNormalMove();
+        // 上級レベル：中程度の探索深度
+        const gamePhase = this.getGamePhase();
+        const depth = gamePhase === 'end' ? 6 : 4;
+        const result = this.minimax(this.selectedColors[1], depth, -Infinity, Infinity, true);
+        return result.move ? { row: result.move.row, col: result.move.col } : this.getNormalMove();
     }
     
     getExpertMove() {
-        // 最も深い評価
-        return this.minimax(this.selectedColors[1], 5, -Infinity, Infinity, true).move || this.getHardMove();
+        // 最強レベル：深い探索と高度な評価
+        const gamePhase = this.getGamePhase();
+        // 終盤はより深く読む
+        const depth = gamePhase === 'end' ? 10 : 7;
+        const result = this.minimax(this.selectedColors[1], depth, -Infinity, Infinity, true);
+        return result.move ? { row: result.move.row, col: result.move.col } : this.getHardMove();
     }
     
     evaluateMove(row, col, player) {
@@ -1129,17 +1175,42 @@ class OthelloGame {
     }
     
     evaluateBoard(player) {
-        let score = 0;
         const opponent = player === this.selectedColors[0] ? this.selectedColors[1] : this.selectedColors[0];
+        const gamePhase = this.getGamePhase();
+        let score = 0;
+        
+        // 位置評価
+        let positionScore = 0;
+        let playerCount = 0;
+        let opponentCount = 0;
         
         for (let row = 0; row < this.boardSize; row++) {
             for (let col = 0; col < this.boardSize; col++) {
                 if (this.board[row][col] === player) {
-                    score += this.getPositionValue(row, col);
+                    positionScore += this.getAdvancedPositionValue(row, col, gamePhase);
+                    playerCount++;
                 } else if (this.board[row][col] === opponent) {
-                    score -= this.getPositionValue(row, col);
+                    positionScore -= this.getAdvancedPositionValue(row, col, gamePhase);
+                    opponentCount++;
                 }
             }
+        }
+        
+        // 移動可能数（機動力）の評価
+        const playerMoves = this.getValidMoves(player).length;
+        const opponentMoves = this.getValidMoves(opponent).length;
+        const mobilityScore = (playerMoves - opponentMoves) * 10;
+        
+        // ゲームフェーズに応じた重み付け
+        if (gamePhase === 'opening') {
+            // 序盤：機動力重視
+            score = positionScore + mobilityScore * 2;
+        } else if (gamePhase === 'middle') {
+            // 中盤：バランス重視
+            score = positionScore + mobilityScore;
+        } else {
+            // 終盤：コマ数重視
+            score = positionScore + (playerCount - opponentCount) * 10;
         }
         
         return score;
@@ -1162,6 +1233,64 @@ class OthelloGame {
         }
         
         return 1;
+    }
+
+    
+    getAdvancedPositionValue(row, col, gamePhase) {
+        // \u30b2\u30fc\u30e0\u30d5\u30a7\u30fc\u30ba\u306b\u5fdc\u3058\u305f\u4f4d\u7f6e\u8a55\u4fa1
+        const weights = [
+            [120, -20,  20,   5,   5,  20, -20, 120],
+            [-20, -40,  -5,  -5,  -5,  -5, -40, -20],
+            [ 20,  -5,  15,   3,   3,  15,  -5,  20],
+            [  5,  -5,   3,   3,   3,   3,  -5,   5],
+            [  5,  -5,   3,   3,   3,   3,  -5,   5],
+            [ 20,  -5,  15,   3,   3,  15,  -5,  20],
+            [-20, -40,  -5,  -5,  -5,  -5, -40, -20],
+            [120, -20,  20,   5,   5,  20, -20, 120]
+        ];
+        
+        let value = weights[row][col];
+        
+        // \u89d2\u304c\u3059\u3067\u306b\u53d6\u3089\u308c\u3066\u3044\u308b\u5834\u5408\u3001\u305d\u306e\u96a3\u306e\u4fa1\u5024\u3092\u4e0a\u3052\u308b
+        const corners = [
+            { r: 0, c: 0, edges: [{r: 0, c: 1}, {r: 1, c: 0}, {r: 1, c: 1}] },
+            { r: 0, c: 7, edges: [{r: 0, c: 6}, {r: 1, c: 7}, {r: 1, c: 6}] },
+            { r: 7, c: 0, edges: [{r: 6, c: 0}, {r: 7, c: 1}, {r: 6, c: 1}] },
+            { r: 7, c: 7, edges: [{r: 7, c: 6}, {r: 6, c: 7}, {r: 6, c: 6}] }
+        ];
+        
+        for (const corner of corners) {
+            if (this.board[corner.r][corner.c] !== null) {
+                for (const edge of corner.edges) {
+                    if (row === edge.r && col === edge.c) {
+                        value = Math.abs(value); // \u30de\u30a4\u30ca\u30b9\u8a55\u4fa1\u3092\u30d7\u30e9\u30b9\u306b
+                    }
+                }
+            }
+        }
+        
+        // \u7d42\u76e4\u3067\u306f\u4f4d\u7f6e\u306e\u91cd\u8981\u5ea6\u304c\u4e0b\u304c\u308b
+        if (gamePhase === 'end') {
+            value = value * 0.5;
+        }
+        
+        return value;
+    }
+    
+    getGamePhase() {
+        // \u76e4\u9762\u306e\u30b3\u30de\u6570\u3067\u30b2\u30fc\u30e0\u30d5\u30a7\u30fc\u30ba\u3092\u5224\u5b9a
+        let count = 0;
+        for (let row = 0; row < this.boardSize; row++) {
+            for (let col = 0; col < this.boardSize; col++) {
+                if (this.board[row][col] !== null) {
+                    count++;
+                }
+            }
+        }
+        
+        if (count < 20) return 'opening';
+        if (count < 45) return 'middle';
+        return 'end';
     }
     
     isGameOver() {
@@ -1332,6 +1461,10 @@ class OthelloGame {
     }
     
     updateMessage(message) {
+        // メッセージが指定されていない場合は、現在のプレイヤーのターンを表示
+        if (!message) {
+            message = `${this.getDisplayNameForColor(this.currentPlayer)}のばんです！コマをおいてね`;
+        }
         document.getElementById('messageArea').innerHTML = `<p>${message}</p>`;
     }
     
@@ -1388,6 +1521,11 @@ class OthelloGame {
         this.isAiThinking = false;
         this.currentPlayer = this.firstPlayer;
         
+        // 履歴をクリア
+        this.boardHistory = [];
+        this.playerHistory = [];
+        this.validMovesHistory = [];
+        
         // 選択された色のテーマを再適用
         if (this.selectedColors[0] && this.selectedColors[1]) {
             this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
@@ -1397,6 +1535,66 @@ class OthelloGame {
         this.init();
         this.updateMessage();
         this.updateScore();
+    }
+
+    saveBoardState() {
+        // \u73fe\u5728\u306e\u76e4\u9762\u72b6\u614b\u3092\u6df1\u3044\u30b3\u30d4\u30fc\u3067\u4fdd\u5b58
+        this.boardHistory.push(this.copyBoard(this.board));
+        this.playerHistory.push(this.currentPlayer);
+        this.validMovesHistory.push([...this.validMoves]);
+    }
+    
+    undoMove() {
+        // \u5c65\u6b74\u304c\u7a7a\u306e\u5834\u5408\u306f\u4f55\u3082\u3057\u306a\u3044
+        if (this.boardHistory.length === 0) {
+            this.playSound('invalid');
+            return;
+        }
+        
+        // CPU\u5bfe\u6226\u306e\u5834\u5408\u3001AI\u304c\u601d\u8003\u4e2d\u306fUndo\u3067\u304d\u306a\u3044
+        if (this.gameMode === 'cpu' && this.isAiThinking) {
+            return;
+        }
+        
+        // CPU\u5bfe\u6226\u306e\u5834\u5408\u306f2\u624b\u623b\u308b\uff08CPU\u306e\u624b\u3068\u4eba\u9593\u306e\u624b\uff09
+        if (this.gameMode === 'cpu') {
+            // \u307e\u305a1\u624b\u623b\u308b\uff08CPU\u306e\u624b\u3092\u623b\u3059\uff09
+            if (this.boardHistory.length > 0) {
+                this.board = this.boardHistory.pop();
+                this.currentPlayer = this.playerHistory.pop();
+                this.validMoves = this.validMovesHistory.pop();
+            }
+            
+            // \u3055\u3089\u306b\u3082\u30461\u624b\u623b\u308b\uff08\u4eba\u9593\u306e\u624b\u3092\u623b\u3059\uff09- \u5c65\u6b74\u304c\u3042\u308b\u5834\u5408\u306e\u307f
+            if (this.boardHistory.length > 0) {
+                this.board = this.boardHistory.pop();
+                this.currentPlayer = this.playerHistory.pop();
+                this.validMoves = this.validMovesHistory.pop();
+            }
+        } else {
+            // PvP\u30e2\u30fc\u30c9\u306e\u5834\u5408\u306f1\u624b\u3060\u3051\u623b\u308b
+            this.board = this.boardHistory.pop();
+            this.currentPlayer = this.playerHistory.pop();
+            this.validMoves = this.validMovesHistory.pop();
+        }
+        
+        // \u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u72b6\u614b\u3092\u89e3\u9664
+        this.gameOver = false;
+        
+        // \u76e4\u9762\u3092\u518d\u63cf\u753b
+        this.renderBoard();
+        this.updateValidMoves();
+        this.updateScore();
+        this.updateTurnIndicator();
+        this.updateMessage();
+        
+        // \u30e2\u30fc\u30c0\u30eb\u3092\u9589\u3058\u308b\uff08\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u30e2\u30fc\u30c0\u30eb\u304c\u8868\u793a\u3055\u308c\u3066\u3044\u308b\u5834\u5408\uff09
+        const winModal = document.getElementById('winModal');
+        if (winModal.classList.contains('show')) {
+            winModal.classList.remove('show');
+        }
+        
+        this.playSound('place');
     }
     
     playSound(type) {

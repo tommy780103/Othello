@@ -577,7 +577,7 @@ h1 {
 }
 
 
-.btn-reset, .btn-hint, .btn-swap, .btn-menu, .btn-play-again {
+.btn-reset, .btn-hint, .btn-swap, .btn-menu, .btn-play-again, .btn-undo {
     padding: 12px 25px;
     font-size: 1.2rem;
     font-weight: bold;
@@ -586,6 +586,14 @@ h1 {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.material-symbols-outlined {
+    font-size: 1.4rem;
+    vertical-align: middle;
 }
 
 .btn-reset {
@@ -595,6 +603,16 @@ h1 {
 
 .btn-reset:hover {
     background: #ff5252;
+    transform: translateY(-2px);
+}
+
+.btn-undo {
+    background: #74b9ff;
+    color: white;
+}
+
+.btn-undo:hover {
+    background: #0984e3;
     transform: translateY(-2px);
 }
 
@@ -1005,6 +1023,13 @@ h1 {
     transition: all 0.3s ease;
     font-size: 1.1rem;
     font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.janken-btn .material-symbols-outlined {
+    font-size: 1.5rem;
 }
 
 .janken-btn:hover {
@@ -1035,6 +1060,13 @@ h1 {
     font-size: 1rem;
     font-weight: bold;
     transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-retry-janken .material-symbols-outlined {
+    font-size: 1.2rem;
 }
 
 .btn-retry-janken:hover {
