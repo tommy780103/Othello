@@ -353,8 +353,9 @@ class OthelloGame {
         
         // playerNamesオブジェクトを選択された色でマッピング
         const newPlayerNames = {};
-        newPlayerNames[player1Color] = this.playerNames.red || this.colorDefaultNames[player1Color];
-        newPlayerNames[player2Color] = this.playerNames.white || this.colorDefaultNames[player2Color];
+        // カスタム名が設定されていない場合は、色のデフォルト名を使用
+        newPlayerNames[player1Color] = this.isCustomName[player1Color] ? this.playerNames[player1Color] : this.colorDefaultNames[player1Color];
+        newPlayerNames[player2Color] = this.isCustomName[player2Color] ? this.playerNames[player2Color] : this.colorDefaultNames[player2Color];
         
         this.playerNames = newPlayerNames;
         
@@ -487,6 +488,10 @@ class OthelloGame {
         // 色テーマを適用
         this.applyColorTheme(this.selectedColors[0], this.selectedColors[1]);
         this.saveSettings();
+        
+        // gameModeを再設定（念のため）
+        this.gameMode = this.humanPlayers === this.totalPlayers ? 'pvp' : 'cpu';
+        console.log('Game mode in showStep3:', this.gameMode, 'humanPlayers:', this.humanPlayers, 'totalPlayers:', this.totalPlayers);
         
         // モードに応じて先攻選択UIを表示
         if (this.gameMode === 'pvp') {
@@ -636,18 +641,18 @@ class OthelloGame {
         let firstPlayer = this.selectedColors[0]; // プレイヤー1の選択色をデフォルトに
         
         if (playerChoice === computerChoice) {
-            result = `あいこ！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}`;
+            result = `あいこ！あなた：${choiceEmoji[playerChoice]}${choiceNames[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}${choiceNames[computerChoice]}`;
             document.getElementById('retryJankenBtn').style.display = 'block';
         } else if (
             (playerChoice === 'rock' && computerChoice === 'scissors') ||
             (playerChoice === 'paper' && computerChoice === 'rock') ||
             (playerChoice === 'scissors' && computerChoice === 'paper')
         ) {
-            result = `あなたのかち！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}<br>あなたから先にはじめます！`;
+            result = `あなたのかち！あなた：${choiceEmoji[playerChoice]}${choiceNames[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}${choiceNames[computerChoice]}<br>あなたから先にはじめます！`;
             firstPlayer = this.selectedColors[0]; // プレイヤー1（人間）の色
             this.jankenDecided = true;
         } else {
-            result = `コンピューターのかち！あなた：${choiceEmoji[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}<br>コンピューターから先にはじめます！`;
+            result = `コンピューターのかち！あなた：${choiceEmoji[playerChoice]}${choiceNames[playerChoice]} コンピューター：${choiceEmoji[computerChoice]}${choiceNames[computerChoice]}<br>コンピューターから先にはじめます！`;
             firstPlayer = this.selectedColors[1]; // プレイヤー2（CPU）の色
             this.jankenDecided = true;
         }
@@ -677,9 +682,9 @@ class OthelloGame {
         document.getElementById('firstBtnPlayer1Color').className = `preview-piece color-${this.selectedColors[0]}`;
         document.getElementById('firstBtnPlayer2Color').className = `preview-piece color-${this.selectedColors[1]}`;
         
-        // プレイヤー名を設定
-        const player1Name = this.playerNames[this.selectedColors[0]] || this.colorDefaultNames[this.selectedColors[0]];
-        const player2Name = this.playerNames[this.selectedColors[1]] || this.colorDefaultNames[this.selectedColors[1]];
+        // プレイヤー名を設定（プレイヤー1とプレイヤー2で正しく区別）
+        const player1Name = this.playerNames[this.selectedColors[0]] || this.colorDefaultNames[this.selectedColors[0]] || 'プレイヤー1';
+        const player2Name = this.playerNames[this.selectedColors[1]] || this.colorDefaultNames[this.selectedColors[1]] || 'プレイヤー2';
         
         document.getElementById('firstBtnPlayer1Name').textContent = player1Name;
         document.getElementById('firstBtnPlayer2Name').textContent = player2Name;

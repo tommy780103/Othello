@@ -1028,8 +1028,9 @@ h1 {
     gap: 8px;
 }
 
-.janken-btn .material-symbols-outlined {
-    font-size: 1.5rem;
+.janken-emoji {
+    font-size: 1.8rem;
+    margin-right: 4px;
 }
 
 .janken-btn:hover {
